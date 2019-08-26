@@ -19,6 +19,10 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 daml_deps()
 
+load("//bazel_tools:os_info.bzl", "os_info")
+os_info(name = "os_info")
+load("@os_info//:os_info.bzl", "is_linux", "is_windows")
+
 load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 
 protobuf_deps()
@@ -26,6 +30,240 @@ protobuf_deps()
 load("@rules_haskell//haskell:repositories.bzl", "rules_haskell_dependencies")
 
 rules_haskell_dependencies()
+
+http_archive(
+    name = "alex",
+    build_file_content = """
+load("@rules_haskell//haskell:cabal.bzl", "haskell_cabal_binary")
+haskell_cabal_binary(
+    name = "alex",
+    srcs = glob(["**"]),
+    visibility = ["//visibility:public"],
+)
+    """,
+    urls = ["http://hackage.haskell.org/package/alex-3.2.4/alex-3.2.4.tar.gz"],
+    strip_prefix = "alex-3.2.4",
+    sha256 = "d58e4d708b14ff332a8a8edad4fa8989cb6a9f518a7c6834e96281ac5f8ff232",
+)
+
+http_archive(
+    name = "happy",
+    build_file_content = """
+load("@rules_haskell//haskell:cabal.bzl", "haskell_cabal_binary")
+haskell_cabal_binary(
+    name = "happy",
+    srcs = glob(["**"]),
+    visibility = ["//visibility:public"],
+)
+    """,
+    urls = ["http://hackage.haskell.org/package/happy-1.19.11/happy-1.19.11.tar.gz"],
+    strip_prefix = "happy-1.19.11",
+    sha256 = "9094d19ed0db980a34f1ffd58e64c7df9b4ecb3beed22fd9b9739044a8d45f77",
+)
+
+http_archive(
+    name = "proto3_suite",
+    build_file_content = """
+load("@rules_haskell//haskell:cabal.bzl", "haskell_cabal_binary", "haskell_cabal_library")
+load("@stackage//:packages.bzl", "packages")
+haskell_cabal_library(
+    name = "proto3-suite",
+    version = "0.4.0.0",
+    srcs = glob(["**"]),
+    deps = packages["proto3-suite"].deps,
+    visibility = ["//visibility:public"],
+)
+haskell_cabal_binary(
+    name = "compile-proto-file",
+    srcs = glob(["**"]),
+    deps = [
+        "@stackage//:base",
+        "@stackage//:optparse-applicative",
+        "@stackage//:proto3-suite",
+        "@stackage//:system-filepath",
+        "@stackage//:text",
+        "@stackage//:turtle",
+    ],
+    visibility = ["//visibility:public"],
+)
+    """,
+    urls = ["https://github.com/awakesecurity/proto3-suite/archive/f5ca2bee361d518de5c60b9d05d0f54c5d2f22af.tar.gz"],
+    strip_prefix = "proto3-suite-f5ca2bee361d518de5c60b9d05d0f54c5d2f22af",
+    sha256 = "6a803b1655824e5bec2c518b39b6def438af26135d631b60c9b70bf3af5f0db2",
+    patches = ["@com_github_digital_asset_daml//bazel_tools:haskell-proto3-suite.patch"],
+    patch_args = ["-p1"],
+)
+
+load("@rules_haskell//haskell:cabal.bzl", "stack_snapshot")
+
+stack_snapshot(
+    name = "stackage",
+    packages = [
+        "aeson",
+        "aeson-pretty",
+        "ansi-terminal",
+        "ansi-wl-pprint",
+        "array",
+        "async",
+        "attoparsec",
+        "base",
+        "base16-bytestring",
+        "base64-bytestring",
+        "binary",
+        "blaze-html",
+        "bytestring",
+        "Cabal",
+        "cereal",
+        "clock",
+        "cmark-gfm",
+        "conduit",
+        "conduit-extra",
+        "connection",
+        "containers",
+        "contravariant",
+        "cryptohash",
+        "cryptonite",
+        "data-default",
+        "deepseq",
+        "directory",
+        "dlist",
+        "either",
+        "exceptions",
+        "extra",
+        "fast-logger",
+        "file-embed",
+        "filepath",
+        "filepattern",
+        "foldl",
+        "ghc",
+        "ghc-boot",
+        "ghc-boot-th",
+        "ghc-lib",
+        "ghc-lib-parser",
+        "ghc-paths",
+        "ghc-prim",
+        "gitrev",
+        "hashable",
+        "haskeline",
+        "haskell-lsp",
+        "haskell-lsp-types",
+        "haskell-src",
+        "haskell-src-exts",
+        "hie-bios",
+        "hlint",
+        "hpc",
+        "http-client",
+        "http-client-tls",
+        "http-conduit",
+        "http-types",
+        "insert-ordered-containers",
+        "lens",
+        "lens-aeson",
+        "lifted-async",
+        "lifted-base",
+        "lsp-test",
+        "main-tester",
+        "managed",
+        "memory",
+        "monad-control",
+        "monad-logger",
+        "monad-loops",
+        "mtl",
+        "neat-interpolation",
+        "network",
+        "network-uri",
+        "nsis",
+        "open-browser",
+        "optparse-applicative",
+        "optparse-generic",
+        "parsec",
+        "parser-combinators",
+        "parsers",
+        "path",
+        "path-io",
+        "pipes",
+        "pretty",
+        "prettyprinter",
+        "prettyprinter-ansi-terminal",
+        "pretty-show",
+        "process",
+        "proto3-wire",
+        "QuickCheck",
+        "quickcheck-instances",
+        "random",
+        "range-set-list",
+        "recursion-schemes",
+        "regex-tdfa",
+        "regex-tdfa-text",
+        "retry",
+        "rope-utf16-splay",
+        "safe",
+        "safe-exceptions",
+        "scientific",
+        "semigroups",
+        "semver",
+        "shake",
+        "sorted-list",
+        "split",
+        "stache",
+        "stm",
+        "swagger2",
+        "syb",
+        "system-filepath",
+        "tagged",
+        "tar",
+        "tar-conduit",
+        "tasty",
+        "tasty-ant-xml",
+        "tasty-golden",
+        "tasty-hunit",
+        "tasty-quickcheck",
+        "template-haskell",
+        "temporary",
+        "terminal-progress-bar",
+        "text",
+        "time",
+        "tls",
+        "transformers",
+        "transformers-base",
+        "turtle",
+        "typed-process",
+        "uniplate",
+        "unix-compat",
+        "unliftio",
+        "unliftio-core",
+        "unordered-containers",
+        "uri-encode",
+        "utf8-string",
+        "uuid",
+        "vector",
+        "xml",
+        "xml-conduit",
+        "yaml",
+        "zip",
+        "zip-archive",
+    ] + (["unix"] if not is_windows else ["Win32"]),
+    vendored_packages = {
+        "proto3-suite": "@proto3_suite//:proto3-suite",
+    },
+    flags = {
+        "blaze-textual": ["integer-simple"],
+        "cryptonite": ["-integer-gmp"],
+        "hashable": ["-integer-gmp"],
+        "integer-logarithms": ["-integer-gmp"],
+        "text": ["integer-simple"],
+        "scientific": ["integer-simple"],
+    } if not is_windows else {},
+    deps = [
+        "@bzip2//:libbz2",
+        "@com_github_madler_zlib//:libz",
+    ],
+    tools = [
+        "@alex//:alex",
+        "@happy//:happy",
+    ],
+    local_snapshot = "//:stack-snapshot.yaml",
+)
 
 register_toolchains(
     "//:c2hs-toolchain",
@@ -39,11 +277,6 @@ load(
     "nixpkgs_local_repository",
     "nixpkgs_package",
 )
-load("//bazel_tools:os_info.bzl", "os_info")
-
-os_info(name = "os_info")
-
-load("@os_info//:os_info.bzl", "is_linux", "is_windows")
 load("//bazel_tools:ghc_dwarf.bzl", "ghc_dwarf")
 
 ghc_dwarf(name = "ghc_dwarf")
