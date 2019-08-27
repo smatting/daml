@@ -11,7 +11,7 @@ da_haskell_test(
     data = [
         "//compiler/damlc",
     ],
-    hazel_deps = [
+    stackage_deps = [
         "aeson",
         "base",
         "containers",
