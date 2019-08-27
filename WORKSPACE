@@ -541,7 +541,7 @@ hazel_repositories(
         hazel_default_extra_libs,
         {
             "z": "@com_github_madler_zlib//:libz",
-            "bz2": "@bzip2//:bz2",
+            "bz2": "@bzip2//:libbz2",
         },
     ),
     ghc_workspaces = {
