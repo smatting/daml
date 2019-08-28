@@ -24,7 +24,7 @@ Please note that currently the tool is in ALPHA status:
 - BETA: will be reached once we extended the coverage to include the full set of
   our test as per <https://github.com/digital-asset/daml/issues/146>.
 
-Downloading the tool
+Downloading the tool (from bintray)
 ====================
 
 Run the following command to fetch the tool:
@@ -34,6 +34,15 @@ Run the following command to fetch the tool:
      curl -L 'https://bintray.com/api/v1/content/digitalassetsdk/DigitalAssetSDK/com/daml/ledger/testtool/ledger-api-test-tool_2.12/$latest/ledger-api-test-tool_2.12-$latest.jar?bt_package=sdk-components' -o ledger-api-test-tool.jar
 
 This will create a file ``ledger-api-test-tool.jar`` in your current directory.
+
+You can alternatively build the tool from source via Bazel if you want to run the tool off the latest daml repo code
+
+.. code-block:: shell
+
+     bazel build //ledger/ledger-api-test-tool:ledger-api-test-tool_deploy.jar
+
+This will create a file ``ledger-api-test-tool_deploy.jar`` in your bazel-bin directory
+
 
 Extracting ``.dar`` files required to run the tests
 ======================================================
@@ -121,7 +130,7 @@ If you wanted to test out the tool, you can run it against :doc:`DAML Sandbox
    .. code-block:: console
 
      $ java -jar ledger-api-test-tool.jar --extract
-     $ da sandbox -- *.dar
+     $ daml sandbox -- *.dar
      $ java -jar ledger-api-test-tool.jar
 
 This should always succeed, as the Sandbox is tested to correctly implement the
@@ -177,3 +186,7 @@ Use the command line options ``--timeout-scale-factor`` and
   which take a long time to commit a proposed transaction. Conversely use values
   smaller than 1.0 to make it give less time for a DAML ledger implementation to
   commit a proposed transaction.
+
+Verbosity
+========================================
+Use the command line options ``--verbose`` to print out a full stack trace for test failures
