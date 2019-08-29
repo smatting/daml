@@ -1,0 +1,481 @@
+From fcd323b7b3dbd0cc509f62ba2020359d4f2ca92f Mon Sep 17 00:00:00 2001
+From: Mathieu Boespflug <m@tweag.io>
+Date: Thu, 30 May 2019 19:02:12 +0200
+Subject: [PATCH 1/4] Implement stack_snapshot.vendored_packages
+
+This feature allows overriding packages in the snapshot with targets
+defined manually. Useful when the source distribution needs to be
+patched, or when the `BUILD` file needs to be customized.
+---
+ haskell/cabal.bzl | 40 ++++++++++++++++++++++++++++------------
+ 1 file changed, 28 insertions(+), 12 deletions(-)
+
+diff --git a/haskell/cabal.bzl b/haskell/cabal.bzl
+index fae880ea..50aad132 100644
+--- a/haskell/cabal.bzl
++++ b/haskell/cabal.bzl
+@@ -672,6 +672,13 @@ Specify a fully qualified package name of the form <package>-<version>.
+                 all_packages[src].deps.append(dest)
+     return all_packages
+ 
++def _invert(d):
++    """Invert a dictionary."""
++    return dict(zip(d.values(), d.keys()))
++
++def _label_to_string(label):
++    return "@{}//{}:{}".format(label.workspace_name, label.package, label.name)
++
+ def _stack_snapshot_impl(repository_ctx):
+     if repository_ctx.attr.snapshot and repository_ctx.attr.local_snapshot:
+         fail("Please specify either snapshot or local_snapshot, but not both.")
+@@ -682,6 +689,7 @@ def _stack_snapshot_impl(repository_ctx):
+     else:
+         fail("Please specify one of snapshot or repository_snapshot")
+ 
++    vendored_dependencies = _invert(repository_ctx.attr.vendored_packages)
+     packages = repository_ctx.attr.packages
+     core_packages = []
+     versioned_packages = []
+@@ -709,14 +717,8 @@ def _stack_snapshot_impl(repository_ctx):
+ load("@rules_haskell//haskell:cabal.bzl", "haskell_cabal_library")
+ load("@rules_haskell//haskell:defs.bzl", "haskell_library", "haskell_toolchain_library")
+ """)
+-    extra_deps = [
+-        "@{}//{}:{}".format(label.workspace_name, label.package, label.name)
+-        for label in repository_ctx.attr.deps
+-    ]
+-    tools = [
+-        "@{}//{}:{}".format(label.workspace_name, label.package, label.name)
+-        for label in repository_ctx.attr.tools
+-    ]
++    extra_deps = [_label_to_string(label) for label in repository_ctx.attr.deps]
++    tools = [_label_to_string(label) for label in repository_ctx.attr.tools]
+     for package in all_packages.values():
+         if package.name in packages or package.versioned_name in packages:
+             visibility = ["//visibility:public"]
+@@ -743,6 +745,11 @@ haskell_library(
+                 ),
+             )
+         else:
++            deps = [
++                _label_to_string(dep_override) if dep_override else dep
++                for dep in package.deps
++                for dep_override in [vendored_dependencies.get(dep)]
++            ]
+             build_file_builder.append(
+                 """
+ haskell_cabal_library(
+@@ -759,7 +766,7 @@ haskell_cabal_library(
+                     version = package.version,
+                     flags = package.flags,
+                     dir = package.sdist,
+-                    deps = package.deps + extra_deps,
++                    deps = deps + extra_deps,
+                     tools = tools,
+                     visibility = visibility,
+                 ),
+@@ -781,6 +788,7 @@ _stack_snapshot = repository_rule(
+         "snapshot": attr.string(),
+         "local_snapshot": attr.label(allow_single_file = True),
+         "packages": attr.string_list(),
++        "vendored_packages": attr.label_keyed_string_dict(),
+         "flags": attr.string_list_dict(),
+         "deps": attr.label_list(),
+         "tools": attr.label_list(),
+@@ -846,7 +854,7 @@ _fetch_stack = repository_rule(
+ )
+ """Find a suitably recent local Stack or download it."""
+ 
+-def stack_snapshot(stack = None, **kwargs):
++def stack_snapshot(stack = None, vendored_packages = {}, **kwargs):
+     """Use Stack to download and extract Cabal source distributions.
+ 
+     Args:
+@@ -855,6 +863,8 @@ def stack_snapshot(stack = None, **kwargs):
+         Incompatible with snapshot.
+       packages: A set of package identifiers. For packages in the snapshot,
+         version numbers can be omitted.
++      vendored_packages: Add or override a package to the snapshot with a custom
++        unpacked source distribution.
+       flags: A dict from package name to list of flags.
+       deps: Dependencies of the package set, e.g. system libraries or C/C++ libraries.
+       tools: Tool dependencies. They are built using the host configuration, since
+@@ -867,6 +877,7 @@ def stack_snapshot(stack = None, **kwargs):
+       stack_snapshot(
+           name = "stackage",
+           packages = ["conduit", "lens", "zlib-0.6.2"],
++          vendored_packages = {"split": "//split:split"},
+           tools = ["@happy//:happy", "@c2hs//:c2hs"],
+           snapshot = "lts-13.15",
+           deps = ["@zlib.dev//:zlib"],
+@@ -908,9 +919,14 @@ def stack_snapshot(stack = None, **kwargs):
+ 
+     In the external repository defined by the rule, all given packages are
+     available as top-level targets named after each package.
+-
+     """
+     if not stack:
+         _fetch_stack(name = "rules_haskell_stack")
+         stack = Label("@rules_haskell_stack//:stack")
+-    _stack_snapshot(stack = stack, **kwargs)
++    _stack_snapshot(
++        stack = stack,
++        # TODO Remove _invert once following issue is resolved:
++        # https://github.com/bazelbuild/bazel/issues/7989.
++        vendored_packages = _invert(vendored_packages),
++        **kwargs
++    )
+
+From 34db089f5bc90562ca0471fe2d8e96d44c6ba099 Mon Sep 17 00:00:00 2001
+From: Andreas Herrmann <andreas.herrmann@tweag.io>
+Date: Mon, 26 Aug 2019 13:17:50 +0200
+Subject: [PATCH 2/4] Inject vendored packages into stack dependency graph
+
+Before vendored packages were only used when generating the `BUILD` file
+to override `deps` attribute to `haskell_cabal_library`. However, this
+did not affect stack's dependency graph generation. A vendored package
+could have a different Cabal file introducing different package
+dependencies. Furthermore, the generated target for a vendored package
+would still point to the unvendored original version.
+
+This change takes this into account, by pointing stack to the source
+directories of the vendored packages. It also changes the generated
+targets to be aliases to the vendored target.
+
+This requires the vendored target to contain a Cabal file at the
+top-level which is not a generated file.
+---
+ haskell/cabal.bzl | 56 +++++++++++++++++++++++++++++++++--------------
+ 1 file changed, 39 insertions(+), 17 deletions(-)
+
+diff --git a/haskell/cabal.bzl b/haskell/cabal.bzl
+index 50aad132..f4e216cc 100644
+--- a/haskell/cabal.bzl
++++ b/haskell/cabal.bzl
+@@ -1,10 +1,12 @@
+ """Cabal packages"""
+ 
++load("@bazel_skylib//:lib.bzl", "paths")
+ load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
+ load(":cc.bzl", "cc_interop_info")
+ load(":private/context.bzl", "haskell_context", "render_env")
+ load(":private/dependencies.bzl", "gather_dep_info")
+ load(":private/mode.bzl", "is_profiling_enabled")
++load(":private/path_utils.bzl", "truly_relativize")
+ load(":private/set.bzl", "set")
+ load(
+     ":private/workspace_utils.bzl",
+@@ -560,7 +562,7 @@ def _stack_version_check(repository_ctx, stack_cmd):
+     stack_major_version = int(exec_result.stdout.split(".")[0])
+     return stack_major_version >= 2
+ 
+-def _compute_dependency_graph(repository_ctx, snapshot, core_packages, versioned_packages, unversioned_packages):
++def _compute_dependency_graph(repository_ctx, snapshot, core_packages, versioned_packages, unversioned_packages, vendored_packages):
+     """Given a list of root packages, compute a dependency graph.
+ 
+     Returns:
+@@ -570,8 +572,9 @@ def _compute_dependency_graph(repository_ctx, snapshot, core_packages, versioned
+         versioned_name: <name>-<version>.
+         flags: Cabal flags for this package.
+         deps: The list of dependencies.
++        vendored: Label of vendored package, None if not vendored.
+         is_core_package: Whether the package is a core package.
+-        sdist: directory name of the unpackaged source distribution or None if core package.
++        sdist: directory name of the unpackaged source distribution or None if core package or vendored.
+ 
+     """
+ 
+@@ -583,11 +586,12 @@ def _compute_dependency_graph(repository_ctx, snapshot, core_packages, versioned
+             versioned_name = None,
+             flags = repository_ctx.attr.flags.get(core_package, []),
+             deps = [],
++            vendored = None,
+             is_core_package = True,
+             sdist = None,
+         )
+ 
+-    if not versioned_packages and not unversioned_packages:
++    if not versioned_packages and not unversioned_packages and not vendored_packages:
+         return all_packages
+ 
+     # Unpack all given packages, then compute the transitive closure
+@@ -603,6 +607,17 @@ def _compute_dependency_graph(repository_ctx, snapshot, core_packages, versioned
+         _execute_or_fail_loudly(repository_ctx, stack + ["unpack"] + unversioned_packages)
+     exec_result = _execute_or_fail_loudly(repository_ctx, ["ls"])
+     unpacked_sdists = exec_result.stdout.splitlines()
++
++    # Determines path to vendored package's root directory relative to stack.yaml.
++    # Note, this requires that the Cabal file exists in the package root and is
++    # called `<name>.cabal`.
++    vendored_sdists = [
++        truly_relativize(
++            str(repository_ctx.path(label.relative(name + ".cabal")).dirname),
++            relative_to = str(repository_ctx.path("stack.yaml").dirname),
++        )
++        for (name, label) in vendored_packages.items()
++    ]
+     package_flags = {
+         pkg_name: {
+             flag[1:] if flag.startswith("-") else flag: not flag.startswith("-")
+@@ -610,7 +625,7 @@ def _compute_dependency_graph(repository_ctx, snapshot, core_packages, versioned
+         }
+         for (pkg_name, flags) in repository_ctx.attr.flags.items()
+     }
+-    stack_yaml_content = struct(resolver = "none", packages = unpacked_sdists, flags = package_flags).to_json()
++    stack_yaml_content = struct(resolver = "none", packages = unpacked_sdists + vendored_sdists, flags = package_flags).to_json()
+     repository_ctx.file("stack.yaml", content = stack_yaml_content, executable = False)
+     exec_result = _execute_or_fail_loudly(
+         repository_ctx,
+@@ -624,6 +639,7 @@ def _compute_dependency_graph(repository_ctx, snapshot, core_packages, versioned
+             continue
+ 
+         version = _version(package)
++        vendored = vendored_packages.get(name, None)
+         is_core_package = name in _CORE_PACKAGES
+         all_packages[name] = struct(
+             name = name,
+@@ -631,11 +647,12 @@ def _compute_dependency_graph(repository_ctx, snapshot, core_packages, versioned
+             versioned_name = package,
+             flags = repository_ctx.attr.flags.get(name, []),
+             deps = [],
++            vendored = vendored,
+             is_core_package = is_core_package,
+-            sdist = None if is_core_package else package,
++            sdist = None if is_core_package or vendored != None else package,
+         )
+ 
+-        if is_core_package:
++        if is_core_package or vendored != None:
+             continue
+ 
+         if version == "<unknown>":
+@@ -653,7 +670,7 @@ Specify a fully qualified package name of the form <package>-<version>.
+     # rather than from Hackage. See #1027.
+     if indirect_unpacked_sdists:
+         _execute_or_fail_loudly(repository_ctx, stack + ["unpack"] + indirect_unpacked_sdists)
+-    stack_yaml_content = struct(resolver = "none", packages = transitive_unpacked_sdists, flags = package_flags).to_json()
++    stack_yaml_content = struct(resolver = "none", packages = transitive_unpacked_sdists + vendored_sdists, flags = package_flags).to_json()
+     repository_ctx.file("stack.yaml", stack_yaml_content, executable = False)
+ 
+     # Compute dependency graph.
+@@ -689,7 +706,7 @@ def _stack_snapshot_impl(repository_ctx):
+     else:
+         fail("Please specify one of snapshot or repository_snapshot")
+ 
+-    vendored_dependencies = _invert(repository_ctx.attr.vendored_packages)
++    vendored_packages = _invert(repository_ctx.attr.vendored_packages)
+     packages = repository_ctx.attr.packages
+     core_packages = []
+     versioned_packages = []
+@@ -697,6 +714,8 @@ def _stack_snapshot_impl(repository_ctx):
+     for package in packages:
+         has_version = _has_version(package)
+         unversioned = _chop_version(package) if has_version else package
++        if unversioned in vendored_packages:
++            fail("Duplicate package '{}'. Packages may not be listed in both 'packages' and 'vendored_packages'.".format(package))
+         if unversioned in _CORE_PACKAGES:
+             core_packages.append(unversioned)
+         elif has_version:
+@@ -709,6 +728,7 @@ def _stack_snapshot_impl(repository_ctx):
+         core_packages,
+         versioned_packages,
+         unversioned_packages,
++        vendored_packages,
+     )
+ 
+     # Write out the dependency graph as a BUILD file.
+@@ -720,11 +740,17 @@ load("@rules_haskell//haskell:defs.bzl", "haskell_library", "haskell_toolchain_l
+     extra_deps = [_label_to_string(label) for label in repository_ctx.attr.deps]
+     tools = [_label_to_string(label) for label in repository_ctx.attr.tools]
+     for package in all_packages.values():
+-        if package.name in packages or package.versioned_name in packages:
++        if package.name in packages or package.versioned_name in packages or package.vendored != None:
+             visibility = ["//visibility:public"]
+         else:
+             visibility = ["//visibility:private"]
+-        if package.is_core_package:
++        if package.vendored != None:
++            build_file_builder.append(
++                """
++alias(name = "{name}", actual = "{actual}", visibility = {visibility})
++""".format(name = package.name, actual = package.vendored, visibility = visibility),
++            )
++        elif package.is_core_package:
+             build_file_builder.append(
+                 """
+ haskell_toolchain_library(name = "{name}", visibility = {visibility})
+@@ -745,11 +771,6 @@ haskell_library(
+                 ),
+             )
+         else:
+-            deps = [
+-                _label_to_string(dep_override) if dep_override else dep
+-                for dep in package.deps
+-                for dep_override in [vendored_dependencies.get(dep)]
+-            ]
+             build_file_builder.append(
+                 """
+ haskell_cabal_library(
+@@ -766,7 +787,7 @@ haskell_cabal_library(
+                     version = package.version,
+                     flags = package.flags,
+                     dir = package.sdist,
+-                    deps = deps + extra_deps,
++                    deps = package.deps + extra_deps,
+                     tools = tools,
+                     visibility = visibility,
+                 ),
+@@ -864,7 +885,8 @@ def stack_snapshot(stack = None, vendored_packages = {}, **kwargs):
+       packages: A set of package identifiers. For packages in the snapshot,
+         version numbers can be omitted.
+       vendored_packages: Add or override a package to the snapshot with a custom
+-        unpacked source distribution.
++        unpacked source distribution. Each package must contain a Cabal file
++        named `<package-name>.cabal` in the package root.
+       flags: A dict from package name to list of flags.
+       deps: Dependencies of the package set, e.g. system libraries or C/C++ libraries.
+       tools: Tool dependencies. They are built using the host configuration, since
+
+From d928de327e008940329b0052c468b8e745f72948 Mon Sep 17 00:00:00 2001
+From: Andreas Herrmann <andreas.herrmann@tweag.io>
+Date: Mon, 26 Aug 2019 13:50:18 +0200
+Subject: [PATCH 3/4] Export stack dependency graph
+
+Exports the stack generated dependency graph, so that Starlark code can
+import and use this information. E.g. a vendored package could import
+the dependency graph into the BUILD file and use it to define the
+package dependencies instead of manually hard-coding them.
+---
+ haskell/cabal.bzl | 28 +++++++++++++++++++++++++---
+ 1 file changed, 25 insertions(+), 3 deletions(-)
+
+diff --git a/haskell/cabal.bzl b/haskell/cabal.bzl
+index f4e216cc..0c17e937 100644
+--- a/haskell/cabal.bzl
++++ b/haskell/cabal.bzl
+@@ -731,14 +731,30 @@ def _stack_snapshot_impl(repository_ctx):
+         vendored_packages,
+     )
+ 
++    extra_deps = [_label_to_string(label) for label in repository_ctx.attr.deps]
++    tools = [_label_to_string(label) for label in repository_ctx.attr.tools]
++
++    # Write out dependency graph as importable Starlark value.
++    repository_ctx.file(
++        "packages.bzl",
++        "packages = " + repr({
++            package.name: struct(
++                name = package.name,
++                version = package.version,
++                deps = [Label("@{}//:{}".format(repository_ctx.name, dep)) for dep in package.deps],
++                flags = package.flags,
++            )
++            for package in all_packages.values()
++        }),
++        executable = False,
++    )
++
+     # Write out the dependency graph as a BUILD file.
+     build_file_builder = []
+     build_file_builder.append("""
+ load("@rules_haskell//haskell:cabal.bzl", "haskell_cabal_library")
+ load("@rules_haskell//haskell:defs.bzl", "haskell_library", "haskell_toolchain_library")
+ """)
+-    extra_deps = [_label_to_string(label) for label in repository_ctx.attr.deps]
+-    tools = [_label_to_string(label) for label in repository_ctx.attr.tools]
+     for package in all_packages.values():
+         if package.name in packages or package.versioned_name in packages or package.vendored != None:
+             visibility = ["//visibility:public"]
+@@ -940,7 +956,13 @@ def stack_snapshot(stack = None, vendored_packages = {}, **kwargs):
+     `<package>-<version>` in the `packages` attribute.
+ 
+     In the external repository defined by the rule, all given packages are
+-    available as top-level targets named after each package.
++    available as top-level targets named after each package. Additionally, the
++    dependency graph is made available within `packages.bzl` as the `dict`
++    `packages` mapping unversioned package names to structs holding the fields
++      - name: The unversioned package name.
++      - version: The package version.
++      - deps: The list of package dependencies according to stack.
++      - flags: The list of Cabal flags.
+     """
+     if not stack:
+         _fetch_stack(name = "rules_haskell_stack")
+
+From 6077bb3dad7804dd78d81c61a750c117aac5f9c8 Mon Sep 17 00:00:00 2001
+From: Andreas Herrmann <andreas.herrmann@tweag.io>
+Date: Tue, 27 Aug 2019 13:33:33 +0200
+Subject: [PATCH 4/4] vendored_packages example
+
+Adds an example usage of vendored_packages to bump cabal version bounds.
+---
+ examples/BUILD.bazel |  0
+ examples/WORKSPACE   | 22 ++++++++++++++++++++++
+ examples/split.patch | 14 ++++++++++++++
+ 3 files changed, 36 insertions(+)
+ create mode 100644 examples/BUILD.bazel
+ create mode 100644 examples/split.patch
+
+diff --git a/examples/BUILD.bazel b/examples/BUILD.bazel
+new file mode 100644
+index 00000000..e69de29b
+diff --git a/examples/WORKSPACE b/examples/WORKSPACE
+index 95a9500f..9bca98c7 100644
+--- a/examples/WORKSPACE
++++ b/examples/WORKSPACE
+@@ -52,6 +52,27 @@ cc_library(
+     repository = "@rules_haskell//nixpkgs:default.nix",
+ )
+ 
++# Demonstrates a vendored Stackage package to bump a version bound.
++http_archive(
++    name = "split",
++    build_file_content = """
++load("@rules_haskell//haskell:cabal.bzl", "haskell_cabal_library")
++load("@stackage//:packages.bzl", "packages")
++haskell_cabal_library(
++    name = "split",
++    version = packages["split"].version,
++    srcs = glob(["**"]),
++    deps = packages["split"].deps,
++    visibility = ["//visibility:public"],
++)
++    """,
++    patch_args = ["-p1"],
++    patches = ["@rules_haskell_examples//:split.patch"],
++    sha256 = "1dcd674f7c5f276f33300f5fd59e49d1ac6fc92ae949fd06a0f6d3e9d9ac1413",
++    strip_prefix = "split-0.2.3.3",
++    urls = ["http://hackage.haskell.org/package/split-0.2.3.3/split-0.2.3.3.tar.gz"],
++)
++
+ load("@rules_haskell//haskell:cabal.bzl", "stack_snapshot")
+ 
+ stack_snapshot(
+@@ -74,6 +95,7 @@ stack_snapshot(
+         "text-show",
+     ],
+     snapshot = "lts-14.0",
++    vendored_packages = {"split": "@split//:split"},
+     deps = ["@zlib.dev//:zlib"],
+ )
+ 
+diff --git a/examples/split.patch b/examples/split.patch
+new file mode 100644
+index 00000000..904157f1
+--- /dev/null
++++ b/examples/split.patch
+@@ -0,0 +1,14 @@
++diff --git a/split.cabal b/split.cabal
++index a60b284..1941c2f 100644
++--- a/split.cabal
+++++ b/split.cabal
++@@ -51,7 +51,7 @@ Source-repository head
++
++ Library
++   ghc-options:       -Wall
++-  build-depends:     base <4.12
+++  build-depends:     base <4.13
++   exposed-modules:   Data.List.Split, Data.List.Split.Internals
++   default-language:  Haskell2010
++   Hs-source-dirs:    src
++

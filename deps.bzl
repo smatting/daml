@@ -30,8 +30,8 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_file"
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 rules_scala_version = "8092d5f6165a8d9c4797d5f089c1ba4eee3326b1"
-rules_haskell_version = "6077bb3dad7804dd78d81c61a750c117aac5f9c8"
-rules_haskell_sha256 = "9147a58f618b07800532f1d0d007364ad727ca01a88045e857fccbd350517488"
+rules_haskell_version = "627b329065a5c10e2f56303c38d684b364344b9b"
+rules_haskell_sha256 = "224d01ed96600e59bfe5350367724b7373bed171ec92c203f87f69fbbdb63eab"
 rules_nixpkgs_version = "5ffb8a4ee9a52bc6bc12f95cd64ecbd82a79bc82"
 
 def daml_deps():
@@ -49,6 +49,7 @@ def daml_deps():
                 "@com_github_digital_asset_daml//bazel_tools:haskell-windows-library-dirs.patch",
                 "@com_github_digital_asset_daml//bazel_tools:haskell-no-isystem.patch",
                 "@com_github_digital_asset_daml//bazel_tools:haskell-opt.patch",
+                "@com_github_digital_asset_daml//bazel_tools:haskell-stack-vendored.patch",
                 "@com_github_digital_asset_daml//bazel_tools:haskell-stackage.patch",
             ],
             patch_args = ["-p1"],
