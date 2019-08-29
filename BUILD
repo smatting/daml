@@ -140,6 +140,7 @@ genrule(
         SDK_VERSION=$$(cat $(location VERSION))
         COMPONENT_VERSION=$$(cat $(location :component-version))
         cat > $@ <<EOF
+{-# LANGUAGE CPP #-}
 module SdkVersion where
 sdkVersion, componentVersion, damlStdlib :: String
 sdkVersion = "$$SDK_VERSION"
@@ -152,7 +153,7 @@ EOF
 da_haskell_library(
     name = "sdk-version-hs-lib",
     srcs = [":sdk-version-hs"],
-    stackage_deps = ["base"],
+    stackage_deps = ["base", "zlib", "zlib-bindings"],
     visibility = ["//visibility:public"],
 )
 

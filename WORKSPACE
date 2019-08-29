@@ -242,6 +242,9 @@ stack_snapshot(
         "yaml",
         "zip",
         "zip-archive",
+
+        "zlib",
+        "zlib-bindings",
     ] + (["unix"] if not is_windows else ["Win32"]),
     vendored_packages = {
         "proto3-suite": "@proto3_suite//:proto3-suite",
