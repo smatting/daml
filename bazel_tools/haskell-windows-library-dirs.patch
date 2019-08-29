@@ -140,7 +140,7 @@ index 00000000..f0ecd075
 +
 +def main():
 +    with response_file(handle_args(sys.argv[1:])) as rsp:
-+        exit_code = subprocess.call([CC, "@" + rsp])
++        exit_code = subprocess.call(["/usr/bin/strace", "-o", "/tmp/cc_wrapper.log", "-A", "-s", "1000", "-e", "trace=execve", CC, "@" + rsp])
 +
 +    sys.exit(exit_code)
 +
