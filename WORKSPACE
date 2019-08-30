@@ -257,10 +257,10 @@ stack_snapshot(
         "text": ["integer-simple"],
         "scientific": ["integer-simple"],
     } if not is_windows else {},
-    deps = [
-        "@bzip2//:libbz2",
-        "@com_github_madler_zlib//:libz",
-    ],
+    deps = {
+        "bzlib-conduit": ["@bzip2//:libbz2"],
+        "zlib": ["@com_github_madler_zlib//:libz"],
+    },
     tools = [
         "@alex//:alex",
         "@happy//:happy",
