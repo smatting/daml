@@ -73,6 +73,18 @@ haskell_cabal_library(
     deps = packages["proto3-suite"].deps,
     visibility = ["//visibility:public"],
 )
+    """,
+    urls = ["https://github.com/awakesecurity/proto3-suite/archive/f5ca2bee361d518de5c60b9d05d0f54c5d2f22af.tar.gz"],
+    strip_prefix = "proto3-suite-f5ca2bee361d518de5c60b9d05d0f54c5d2f22af",
+    sha256 = "6a803b1655824e5bec2c518b39b6def438af26135d631b60c9b70bf3af5f0db2",
+    patches = ["@com_github_digital_asset_daml//bazel_tools:haskell-proto3-suite.patch"],
+    patch_args = ["-p1"],
+)
+
+http_archive(
+    name = "compile_proto_file",
+    build_file_content = """
+load("@rules_haskell//haskell:cabal.bzl", "haskell_cabal_binary", "haskell_cabal_library")
 haskell_cabal_binary(
     name = "compile-proto-file",
     srcs = glob(["**"]),

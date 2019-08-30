@@ -54,11 +54,11 @@ genrule(
     cmd = """
     ORIGPWD=$$PWD
     cd compiler/scenario-service/protos
-    $$ORIGPWD/$(location @proto3_suite//:compile-proto-file) \
+    $$ORIGPWD/$(location @compile_proto_file//:compile-proto-file) \
       --proto scenario_service.proto --out "$$ORIGPWD/$(@D)"
   """,
     tools = [
-        "@proto3_suite//:compile-proto-file",
+        "@compile_proto_file//:compile-proto-file",
     ],
 )
 
