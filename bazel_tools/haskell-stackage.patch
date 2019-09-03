@@ -25,10 +25,27 @@ index 9bca98c7..4da9e173 100644
  
  # For the rts example.
 diff --git a/haskell/cabal.bzl b/haskell/cabal.bzl
-index 0c17e937..7f88ed96 100644
+index 0c17e937..34eabcbf 100644
 --- a/haskell/cabal.bzl
 +++ b/haskell/cabal.bzl
-@@ -693,6 +693,25 @@ def _invert(d):
+@@ -70,6 +70,7 @@ main = defaultMain
+     return setup
+ 
+ _CABAL_TOOLS = ["alex", "c2hs", "cpphs", "doctest", "happy"]
++_CABAL_TOOL_LIBRARIES = ["cpphs", "doctest"]
+ 
+ # Some old packages are empty compatibility shims. Empty packages
+ # cause Cabal to not produce the outputs it normally produces. Instead
+@@ -635,7 +636,7 @@ def _compute_dependency_graph(repository_ctx, snapshot, core_packages, versioned
+     indirect_unpacked_sdists = []
+     for package in exec_result.stdout.splitlines():
+         name = _chop_version(package)
+-        if name in _CABAL_TOOLS:
++        if name in _CABAL_TOOLS and not name in _CABAL_TOOL_LIBRARIES:
+             continue
+ 
+         version = _version(package)
+@@ -693,6 +694,25 @@ def _invert(d):
      """Invert a dictionary."""
      return dict(zip(d.values(), d.keys()))
  
@@ -54,7 +71,7 @@ index 0c17e937..7f88ed96 100644
  def _label_to_string(label):
      return "@{}//{}:{}".format(label.workspace_name, label.package, label.name)
  
-@@ -731,7 +750,7 @@ def _stack_snapshot_impl(repository_ctx):
+@@ -731,7 +751,7 @@ def _stack_snapshot_impl(repository_ctx):
          vendored_packages,
      )
  
@@ -63,7 +80,7 @@ index 0c17e937..7f88ed96 100644
      tools = [_label_to_string(label) for label in repository_ctx.attr.tools]
  
      # Write out dependency graph as importable Starlark value.
-@@ -803,7 +822,10 @@ haskell_cabal_library(
+@@ -803,7 +823,10 @@ haskell_cabal_library(
                      version = package.version,
                      flags = package.flags,
                      dir = package.sdist,
@@ -75,7 +92,7 @@ index 0c17e937..7f88ed96 100644
                      tools = tools,
                      visibility = visibility,
                  ),
-@@ -827,7 +849,7 @@ _stack_snapshot = repository_rule(
+@@ -827,7 +850,7 @@ _stack_snapshot = repository_rule(
          "packages": attr.string_list(),
          "vendored_packages": attr.label_keyed_string_dict(),
          "flags": attr.string_list_dict(),
@@ -84,7 +101,7 @@ index 0c17e937..7f88ed96 100644
          "tools": attr.label_list(),
          "stack": attr.label(),
      },
-@@ -891,7 +913,7 @@ _fetch_stack = repository_rule(
+@@ -891,7 +914,7 @@ _fetch_stack = repository_rule(
  )
  """Find a suitably recent local Stack or download it."""
  
@@ -93,7 +110,7 @@ index 0c17e937..7f88ed96 100644
      """Use Stack to download and extract Cabal source distributions.
  
      Args:
-@@ -904,7 +926,7 @@ def stack_snapshot(stack = None, vendored_packages = {}, **kwargs):
+@@ -904,7 +927,7 @@ def stack_snapshot(stack = None, vendored_packages = {}, **kwargs):
          unpacked source distribution. Each package must contain a Cabal file
          named `<package-name>.cabal` in the package root.
        flags: A dict from package name to list of flags.
@@ -102,7 +119,7 @@ index 0c17e937..7f88ed96 100644
        tools: Tool dependencies. They are built using the host configuration, since
          the tools are executed as part of the build.
        stack: The stack binary to use to enumerate package dependencies.
-@@ -918,7 +940,7 @@ def stack_snapshot(stack = None, vendored_packages = {}, **kwargs):
+@@ -918,7 +941,7 @@ def stack_snapshot(stack = None, vendored_packages = {}, **kwargs):
            vendored_packages = {"split": "//split:split"},
            tools = ["@happy//:happy", "@c2hs//:c2hs"],
            snapshot = "lts-13.15",
@@ -111,7 +128,7 @@ index 0c17e937..7f88ed96 100644
        )
        ```
        defines `@stackage//:conduit`, `@stackage//:lens`,
-@@ -932,7 +954,7 @@ def stack_snapshot(stack = None, vendored_packages = {}, **kwargs):
+@@ -932,7 +955,7 @@ def stack_snapshot(stack = None, vendored_packages = {}, **kwargs):
            flags = {"zlib": ["-non-blocking-ffi"]},
            tools = ["@happy//:happy", "@c2hs//:c2hs"],
            local_Snapshot = "//:snapshot.yaml",
@@ -120,7 +137,7 @@ index 0c17e937..7f88ed96 100644
        ```
        Does the same as the previous example, provided there is a
        `snapshot.yaml`, at the root of the repository with content
-@@ -969,6 +991,9 @@ def stack_snapshot(stack = None, vendored_packages = {}, **kwargs):
+@@ -969,6 +992,9 @@ def stack_snapshot(stack = None, vendored_packages = {}, **kwargs):
          stack = Label("@rules_haskell_stack//:stack")
      _stack_snapshot(
          stack = stack,
