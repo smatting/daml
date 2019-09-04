@@ -33,7 +33,7 @@ da_haskell_library(
 da_haskell_test(
     name = "tests",
     srcs = glob(["test/**/*.hs"]),
-    hazel_deps = [
+    stackage_deps = [
         "base",
         "tasty",
         "tasty-hunit",

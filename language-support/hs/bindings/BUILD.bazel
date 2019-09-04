@@ -52,7 +52,6 @@ da_haskell_test(
     ],
     # The tests are flaky probably due to issues in gRPC-haskell.
     flaky = True,
-    hazel_deps = [
     stackage_deps = [
         "async",
         "base",
