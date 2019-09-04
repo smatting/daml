@@ -41,12 +41,10 @@ def daml_deps():
             strip_prefix = "rules_haskell-%s" % rules_haskell_version,
             urls = ["https://github.com/tweag/rules_haskell/archive/%s.tar.gz" % rules_haskell_version],
             patches = [
-                "@com_github_digital_asset_daml//bazel_tools:haskell-drop-fake-static.patch",
                 "@com_github_digital_asset_daml//bazel_tools:haskell-windows-extra-libraries.patch",
-                "@com_github_digital_asset_daml//bazel_tools:haskell-darwin-symlink-dylib.patch",
                 "@com_github_digital_asset_daml//bazel_tools:haskell-ghci-grpc.patch",
                 "@com_github_digital_asset_daml//bazel_tools:haskell_public_ghci_repl_wrapper.patch",
-                "@com_github_digital_asset_daml//bazel_tools:haskell-windows-library-dirs.patch",
+                "@com_github_digital_asset_daml//bazel_tools:haskell-cc-wrapper.patch",
                 "@com_github_digital_asset_daml//bazel_tools:haskell-no-isystem.patch",
                 "@com_github_digital_asset_daml//bazel_tools:haskell-opt.patch",
                 "@com_github_digital_asset_daml//bazel_tools:haskell-stack-vendored.patch",
