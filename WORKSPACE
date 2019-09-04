@@ -7,8 +7,6 @@ workspace(
     },
 )
 
-load("//:util.bzl", "hazel_ghclibs", "hazel_github", "hazel_github_external", "hazel_hackage")
-
 # NOTE(JM): Load external dependencies from deps.bzl.
 # Do not put "http_archive" and similar rules into this file. Put them into
 # deps.bzl. This allows using this repository as an external workspace.
@@ -74,19 +72,11 @@ haskell_cabal_binary(
     name = "c2hs",
     srcs = glob(["**"]),
     deps = [
-        "@stackage//:array",
-        "@stackage//:base",
-        "@stackage//:bytestring",
-        "@stackage//:containers",
-        "@stackage//:directory",
-        "@stackage//:dlist",
-        "@stackage//:filepath",
-        "@stackage//:language-c",
-        "@stackage//:pretty",
-        "@stackage//:process",
-        "@stackage//:shelly",
-        "@stackage//:text",
-        "@stackage//:yaml",
+        "@c2hs_deps//:base",
+        "@c2hs_deps//:bytestring",
+        "@c2hs_deps//:language-c",
+        "@c2hs_deps//:filepath",
+        "@c2hs_deps//:dlist",
     ],
     visibility = ["//visibility:public"],
 )
@@ -146,9 +136,6 @@ load("@rules_haskell//haskell:cabal.bzl", "stack_snapshot")
 stack_snapshot(
     name = "stackage",
     packages = [
-        "language-c",
-        "shelly",
-
         "aeson",
         "aeson-pretty",
         "ansi-terminal",
@@ -174,6 +161,7 @@ stack_snapshot(
         "cryptohash",
         "cryptonite",
         "data-default",
+        "Decimal",
         "deepseq",
         "directory",
         "dlist",
@@ -193,6 +181,8 @@ stack_snapshot(
         "ghc-paths",
         "ghc-prim",
         "gitrev",
+        "grpc-haskell",
+        "grpc-haskell-core",
         "hashable",
         "haskeline",
         "haskell-lsp",
@@ -214,6 +204,7 @@ stack_snapshot(
         "lsp-test",
         "main-tester",
         "managed",
+        "megaparsec",
         "memory",
         "monad-control",
         "monad-logger",
@@ -292,7 +283,6 @@ stack_snapshot(
         "yaml",
         "zip",
         "zip-archive",
-
         "zlib",
         "zlib-bindings",
     ] + (["unix"] if not is_windows else ["Win32"]),
@@ -310,8 +300,27 @@ stack_snapshot(
     deps = {
         "bzlib-conduit": ["@bzip2//:libbz2"],
         "digest": ["@com_github_madler_zlib//:libz"],
+        "grpc-haskell-core": ["//3rdparty/c:gpr", "//3rdparty/c:grpc"],
         "zlib": ["@com_github_madler_zlib//:libz"],
     },
+    tools = [
+        "@alex//:alex",
+        "@c2hs//:c2hs",
+        "@happy//:happy",
+    ],
+    local_snapshot = "//:stack-snapshot.yaml",
+)
+
+# Used to bootstrap `@c2hs` for `@stackage`.
+stack_snapshot(
+    name = "c2hs_deps",
+    packages = [
+        "base",
+        "bytestring",
+        "language-c",
+        "filepath",
+        "dlist",
+    ],
     tools = [
         "@alex//:alex",
         "@happy//:happy",

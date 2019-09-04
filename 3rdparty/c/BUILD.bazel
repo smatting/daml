@@ -1,6 +1,51 @@
 # Copyright (c) 2019 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
+load("@com_github_digital_asset_daml//bazel_tools:fat_cc_library.bzl", "fat_cc_library")
 
 exports_files([
     "zlib.BUILD",
 ])
+
+fat_cc_library(
+    name = "gpr",
+    input_lib = "@com_github_grpc_grpc//:gpr",
+    visibility = [
+        "//visibility:public",
+    ],
+)
+
+fat_cc_library(
+    name = "grpc",
+    input_lib = "@com_github_grpc_grpc//:grpc",
+    visibility = [
+        "//visibility:public",
+    ],
+)
+
+cc_library(
+    name = "libgpr",
+    # Import as `srcs` to enforce the library name `libgpr.so`. Otherwise,
+    # Bazel would mangle the library name and e.g. Cabal wouldn't recognize it.
+    srcs = ["@com_github_grpc_grpc//:gpr_base"],
+    #hdrs = [":headers"],
+    #includes = [
+    #    ".",
+    #],
+    visibility = [
+        "//visibility:public",
+    ],
+)
+
+cc_library(
+    name = "libgrpc",
+    # Import as `srcs` to enforce the library name `libgrpc.so`. Otherwise,
+    # Bazel would mangle the library name and e.g. Cabal wouldn't recognize it.
+    srcs = ["@com_github_grpc_grpc//:grpc"],
+    #hdrs = [":headers"],
+    #includes = [
+    #    ".",
+    #],
+    visibility = [
+        "//visibility:public",
+    ],
+)
