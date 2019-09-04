@@ -1,5 +1,5 @@
 diff --git a/haskell/cabal.bzl b/haskell/cabal.bzl
-index c585332f..9d4a32db 100644
+index c585332f..921f90f8 100644
 --- a/haskell/cabal.bzl
 +++ b/haskell/cabal.bzl
 @@ -810,16 +810,31 @@ def _get_platform(repository_ctx):
@@ -44,3 +44,12 @@ index c585332f..9d4a32db 100644
  
      return (os, arch)
  
+@@ -840,7 +855,7 @@ def _fetch_stack_impl(repository_ctx):
+     repository_ctx.download_and_extract(url = url, sha256 = sha256)
+     stack_cmd = repository_ctx.path(
+         "stack-{}-{}-{}".format(version, os, arch),
+-    ).get_child("stack")
++    ).get_child("stack.exe" if os == "windows" else "stack")
+     _execute_or_fail_loudly(repository_ctx, [stack_cmd, "--version"])
+     exec_result = repository_ctx.execute([stack_cmd, "--version"], quiet = True)
+     if exec_result.return_code != 0:
