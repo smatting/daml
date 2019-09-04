@@ -217,6 +217,6 @@ index 00000000..08679aaa
 +    exec ~/bin/worker ${compile_flags[@]} --persistent_worker
 +else
 +    while IFS= read -r line; do extra_args+=("$line"); done < "$2"
-+    /usr/bin/strace -f -e trace=execve -s 1000 -o /tmp/damlc.strace -A "${compile_flags[@]}" "${extra_args[@]}" 2>&1 \
++    "${compile_flags[@]}" "${extra_args[@]}" 2>&1 \
 +      | while IFS= read -r line; do [[ $line =~ ^Loaded ]] || echo "$line"; done >&2
 +fi
