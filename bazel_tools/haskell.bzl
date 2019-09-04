@@ -12,10 +12,6 @@ load(
     "@rules_haskell//haskell:c2hs.bzl",
     "c2hs_library",
 )
-load(
-    "@ai_formation_hazel//:hazel.bzl",
-    "hazel_library",
-)
 load("//bazel_tools:hlint.bzl", "haskell_hlint")
 load("@os_info//:os_info.bzl", "is_windows")
 
@@ -66,11 +62,11 @@ common_haskell_flags = [
 
 def _wrap_rule(rule, name = "", deps = [], stackage_deps = [], compiler_flags = [], **kwargs):
     ext_flags = ["-X%s" % ext for ext in common_haskell_exts]
-    hazel_libs = [Label("@stackage//:{}".format(dep)) for dep in stackage_deps]
+    stackage_libs = [Label("@stackage//:{}".format(dep)) for dep in stackage_deps]
     rule(
         name = name,
         compiler_flags = ext_flags + common_haskell_flags + compiler_flags,
-        deps = hazel_libs + deps,
+        deps = stackage_libs + deps,
         **kwargs
     )
 
@@ -101,7 +97,7 @@ def da_haskell_library(**kwargs):
     """
     Define a Haskell library.
 
-    Allows to define Hazel dependencies using `stackage_deps`,
+    Allows to define Stackage dependencies using `stackage_deps`,
     applies common Haskell options defined in `bazel_tools/haskell.bzl`
     and forwards to `haskell_library` from `rules_haskell`.
     Refer to the [`rules_haskell` documentation][rules_haskell_docs].
@@ -131,7 +127,7 @@ def da_haskell_binary(main_function = "Main.main", **kwargs):
     """
     Define a Haskell executable.
 
-    Allows to define Hazel dependencies using `stackage_deps`,
+    Allows to define Stackage dependencies using `stackage_deps`,
     applies common Haskell options defined in `bazel_tools/haskell.bzl`
     and forwards to `haskell_binary` from `rules_haskell`.
     Refer to the [`rules_haskell` documentation][rules_haskell_docs].
@@ -167,7 +163,7 @@ def da_haskell_test(main_function = "Main.main", testonly = True, **kwargs):
     """
     Define a Haskell test suite.
 
-    Allows to define Hazel dependencies using `stackage_deps`,
+    Allows to define Stackage dependencies using `stackage_deps`,
     applies common Haskell options defined in `bazel_tools/haskell.bzl`
     and forwards to `haskell_test` from `rules_haskell`.
     Refer to the [`rules_haskell` documentation][rules_haskell_docs].
@@ -305,10 +301,3 @@ def c2hs_suite(name, stackage_deps, deps = [], srcs = [], c2hs_srcs = [], c2hs_s
         stackage_deps = stackage_deps,
         **kwargs
     )
-
-# Add extra packages, e.g., packages that are on Hackage but not in Stackage.
-# This cannot be inlined since it is impossible to create a struct in WORKSPACE.
-def add_extra_packages(pkgs, extra):
-    result = dict(pkgs)
-    result.update({k: struct(**v) for (k, v) in extra})
-    return result
