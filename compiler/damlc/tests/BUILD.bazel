@@ -10,14 +10,14 @@ load(":util.bzl", "damlc_compile_test", "damlc_integration_test")
 da_haskell_test(
     name = "damlc-cliparser",
     srcs = ["src/CliParser.hs"],
+    main_function = "Cli.main",
+    src_strip_prefix = "tests",
     stackage_deps = [
         "tasty",
         "base",
         "optparse-applicative",
         "tasty-hunit",
     ],
-    main_function = "Cli.main",
-    src_strip_prefix = "tests",
     visibility = ["//visibility:private"],
     deps = [
         "//compiler/damlc:damlc-lib",
@@ -28,14 +28,14 @@ da_haskell_test(
 da_haskell_test(
     name = "daml-lf-reader",
     srcs = ["src/DarReaderTest.hs"],
+    main_function = "DarReaderTest.main",
+    src_strip_prefix = "tests",
     stackage_deps = [
         "base",
         "bytestring",
         "tasty",
         "tasty-hunit",
     ],
-    main_function = "DarReaderTest.main",
-    src_strip_prefix = "tests",
     visibility = ["//visibility:private"],
     deps = [
         "//compiler/daml-lf-reader",
@@ -50,14 +50,14 @@ da_haskell_test(
         "//compiler/damlc/pkg-db",
         "//compiler/scenario-service/server:scenario_service_jar",
     ],
+    main_function = "DamlcTest.main",
+    src_strip_prefix = "tests",
     stackage_deps = [
         "base",
         "extra",
         "tasty",
         "tasty-hunit",
     ],
-    main_function = "DamlcTest.main",
-    src_strip_prefix = "tests",
     visibility = ["//visibility:private"],
     deps = [
         "//compiler/damlc:damlc-lib",
@@ -81,13 +81,13 @@ da_haskell_test(
         ":daml-test-files",
         "//compiler/damlc/pkg-db",
     ],
+    main_function = "DA.Test.DamlDoc.main",
+    src_strip_prefix = "src",
     stackage_deps = [
         "base",
         "tasty-hunit",
         "text",
     ],
-    main_function = "DA.Test.DamlDoc.main",
-    src_strip_prefix = "src",
     visibility = ["//visibility:public"],
     deps = [
         "//compiler/damlc:damlc-lib",
@@ -101,6 +101,8 @@ da_haskell_test(
     name = "daml-doctest",
     srcs = ["src/DA/Test/DamlDocTest.hs"],
     data = ["//compiler/damlc/pkg-db"],
+    main_function = "DA.Test.DamlDocTest.main",
+    src_strip_prefix = "src",
     stackage_deps = [
         "base",
         "extra",
@@ -108,8 +110,6 @@ da_haskell_test(
         "tasty-hunit",
         "text",
     ],
-    main_function = "DA.Test.DamlDocTest.main",
-    src_strip_prefix = "src",
     visibility = ["//visibility:public"],
     deps = [
         "//compiler/damlc:damlc-lib",
@@ -126,6 +126,8 @@ da_haskell_test(
     name = "daml-doctest-integration",
     srcs = ["src/DA/Test/DamlDocTestIntegration.hs"],
     data = ["//compiler/damlc"],
+    main_function = "DA.Test.DamlDocTestIntegration.main",
+    src_strip_prefix = "src",
     stackage_deps = [
         "base",
         "extra",
@@ -134,8 +136,6 @@ da_haskell_test(
         "tasty",
         "tasty-hunit",
     ],
-    main_function = "DA.Test.DamlDocTestIntegration.main",
-    src_strip_prefix = "src",
     visibility = ["//visibility:public"],
     deps = [
         "//libs-haskell/bazel-runfiles",
@@ -153,6 +153,8 @@ da_haskell_test(
         "//compiler/damlc/pkg-db",
         "//compiler/scenario-service/server:scenario_service_jar",
     ],
+    main_function = "DA.Test.ShakeIdeClient.main",
+    src_strip_prefix = "src",
     stackage_deps = [
         "base",
         "directory",
@@ -160,8 +162,6 @@ da_haskell_test(
         "text",
         "containers",
     ],
-    main_function = "DA.Test.ShakeIdeClient.main",
-    src_strip_prefix = "src",
     visibility = ["//visibility:public"],
     deps = [
         "//compiler/damlc/daml-compiler",
@@ -176,6 +176,8 @@ da_haskell_test(
 da_haskell_test(
     name = "position-mapping",
     srcs = ["src/DA/Test/PositionMapping.hs"],
+    main_function = "DA.Test.PositionMapping.main",
+    src_strip_prefix = "src",
     stackage_deps = [
         "base",
         "haskell-lsp",
@@ -188,8 +190,6 @@ da_haskell_test(
         "tasty-quickcheck",
         "text",
     ],
-    main_function = "DA.Test.PositionMapping.main",
-    src_strip_prefix = "src",
     visibility = ["//visibility:public"],
     deps = ["//compiler/hie-core"],
 )
@@ -199,12 +199,12 @@ da_haskell_test(
 da_haskell_binary(
     name = "generate-module-tree",
     srcs = ["src/DA/Test/GenerateModuleTree.hs"],
+    main_function = "DA.Test.GenerateModuleTree.main",
+    src_strip_prefix = "src",
     stackage_deps = [
         "base",
         "filepath",
     ],
-    main_function = "DA.Test.GenerateModuleTree.main",
-    src_strip_prefix = "src",
     deps = ["//libs-haskell/da-hs-base"],
 )
 

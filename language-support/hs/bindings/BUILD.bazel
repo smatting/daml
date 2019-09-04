@@ -52,6 +52,8 @@ da_haskell_test(
     ],
     # The tests are flaky probably due to issues in gRPC-haskell.
     flaky = True,
+    main_function = "DA.Ledger.Tests.main",
+    src_strip_prefix = "test",
     stackage_deps = [
         "async",
         "base",
@@ -72,8 +74,6 @@ da_haskell_test(
         "uuid",
         "zip-archive",
     ],
-    main_function = "DA.Ledger.Tests.main",
-    src_strip_prefix = "test",
     visibility = ["//visibility:public"],
     deps = [
         "//compiler/daml-lf-ast",

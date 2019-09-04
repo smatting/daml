@@ -7,12 +7,12 @@ load("@os_info//:os_info.bzl", "is_linux", "is_windows")
 da_haskell_binary(
     name = "windows-installer-gen",
     srcs = glob(["src/**/*.hs"]),
+    src_strip_prefix = "src",
     stackage_deps = [
         "base",
         "filepath",
         "nsis",
     ],
-    src_strip_prefix = "src",
     visibility = ["//visibility:public"],
     deps = ["//:sdk-version-hs-lib"],
 )

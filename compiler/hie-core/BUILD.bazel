@@ -62,12 +62,12 @@ hidden = [
 da_haskell_library(
     name = "hie-core",
     srcs = glob(["src/**/*.hs"]),
+    hidden_modules = hidden,
+    src_strip_prefix = "src",
     stackage_deps = depends + [
         "ghc-lib",
         "ghc-lib-parser",
     ],
-    hidden_modules = hidden,
-    src_strip_prefix = "src",
     visibility = ["//visibility:public"],
     deps = [] if is_windows else [":getmodtime"],
 )
@@ -86,11 +86,6 @@ da_haskell_library(
     name = "hie-core-public",
     srcs = glob(["src/**/*.hs"]),
     compiler_flags = ["-DGHC_STABLE"],
-    stackage_deps = depends + [
-        "ghc",
-        "ghc-boot",
-        "ghc-boot-th",
-    ],
     hidden_modules = hidden,
     # Override the -hide-package flags defined in WORKSPACE
     #   -hide-package=ghc-boot-th -hide-package=ghc-boot
@@ -99,6 +94,11 @@ da_haskell_library(
         "-package=ghc-boot-th",
     ],
     src_strip_prefix = "src",
+    stackage_deps = depends + [
+        "ghc",
+        "ghc-boot",
+        "ghc-boot-th",
+    ],
     visibility = ["//visibility:public"],
     deps = [] if is_windows else [":getmodtime"],
 )
@@ -106,6 +106,7 @@ da_haskell_library(
 da_haskell_binary(
     name = "hie-core-exe",
     srcs = glob(["exe/**/*.hs"]),
+    src_strip_prefix = "test",
     stackage_deps = [
         "base",
         "containers",
@@ -121,7 +122,6 @@ da_haskell_binary(
         "shake",
         "text",
     ],
-    src_strip_prefix = "test",
     visibility = ["//visibility:public"],
     deps = [
         "hie-core-public",

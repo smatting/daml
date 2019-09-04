@@ -6,6 +6,7 @@ load("//bazel_tools:haskell.bzl", "da_haskell_library")
 da_haskell_library(
     name = "daml-doctest",
     srcs = glob(["src/**/*.hs"]),
+    src_strip_prefix = "src",
     stackage_deps = [
         "base",
         "deepseq",
@@ -14,7 +15,6 @@ da_haskell_library(
         "syb",
         "text",
     ],
-    src_strip_prefix = "src",
     visibility = ["//visibility:public"],
     deps = [
         "//compiler/hie-core",

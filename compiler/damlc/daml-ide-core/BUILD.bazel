@@ -12,6 +12,7 @@ da_haskell_library(
     name = "daml-ide-core",
     srcs = glob(["src/**/*.hs"]),
     data = [":dlint.yaml"],
+    src_strip_prefix = "src",
     stackage_deps = [
         "aeson",
         "base",
@@ -43,7 +44,6 @@ da_haskell_library(
         "utf8-string",
         "vector",
     ],
-    src_strip_prefix = "src",
     visibility = ["//visibility:public"],
     deps = [
         "//compiler/daml-lf-ast",
@@ -62,6 +62,7 @@ da_haskell_library(
 da_haskell_library(
     name = "ide-testing",
     srcs = glob(["test/**/*.hs"]),
+    src_strip_prefix = "test",
     stackage_deps = [
         "aeson",
         "base",
@@ -81,7 +82,6 @@ da_haskell_library(
         "time",
         "vector",
     ],
-    src_strip_prefix = "test",
     visibility = ["//visibility:public"],
     deps = [
         ":daml-ide-core",

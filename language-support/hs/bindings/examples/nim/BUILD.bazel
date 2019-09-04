@@ -14,6 +14,7 @@ da_haskell_binary(
     name = "nim",
     srcs = glob(["src/**/*.hs"]),
     compiler_flags = [],
+    main_function = "DA.Ledger.App.Nim.Main.main",
     stackage_deps = [
         "ansi-terminal",
         "base",
@@ -27,7 +28,6 @@ da_haskell_binary(
         "transformers",
         "uuid",
     ],
-    main_function = "DA.Ledger.App.Nim.Main.main",
     visibility = ["//visibility:public"],
     deps = [
         "//compiler/daml-lf-ast",

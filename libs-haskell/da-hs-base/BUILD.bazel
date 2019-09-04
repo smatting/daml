@@ -7,6 +7,7 @@ load("@os_info//:os_info.bzl", "is_windows")
 da_haskell_library(
     name = "da-hs-base",
     srcs = glob(["src/**/*.hs"]),
+    src_strip_prefix = "src",
     stackage_deps = [
         "aeson-pretty",
         "aeson",
@@ -53,7 +54,6 @@ da_haskell_library(
         "uuid",
         "vector",
     ] + ([] if is_windows else ["unix"]),
-    src_strip_prefix = "src",
     visibility = ["//visibility:public"],
     deps = [
         "//daml-assistant:daml-project-config",
@@ -63,6 +63,7 @@ da_haskell_library(
 da_haskell_test(
     name = "da-hs-base-tests",
     srcs = glob(["tests/**/*.hs"]),
+    main_function = "DataLimit.main",
     stackage_deps = [
         "aeson",
         "extra",
@@ -72,7 +73,6 @@ da_haskell_test(
         "tasty-hunit",
         "text",
     ],
-    main_function = "DataLimit.main",
     visibility = ["//visibility:public"],
     deps = [
         ":da-hs-base",

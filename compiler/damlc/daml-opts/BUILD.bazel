@@ -9,6 +9,7 @@ load(
 da_haskell_library(
     name = "daml-opts-types",
     srcs = ["daml-opts-types/DA/Daml/Options/Types.hs"],
+    src_strip_prefix = "daml-opts-types",
     stackage_deps = [
         "base",
         "directory",
@@ -18,7 +19,6 @@ da_haskell_library(
         "ghc-lib-parser",
         "mtl",
     ],
-    src_strip_prefix = "daml-opts-types",
     visibility = ["//visibility:public"],
     deps = [
         "//compiler/daml-lf-ast",
@@ -34,6 +34,7 @@ da_haskell_library(
 da_haskell_library(
     name = "daml-opts",
     srcs = ["daml-opts/DA/Daml/Options.hs"],
+    src_strip_prefix = "daml-opts",
     stackage_deps = [
         "base",
         "directory",
@@ -43,7 +44,6 @@ da_haskell_library(
         "ghc-lib-parser",
         "mtl",
     ],
-    src_strip_prefix = "daml-opts",
     visibility = ["//visibility:public"],
     deps = [
         ":daml-opts-types",

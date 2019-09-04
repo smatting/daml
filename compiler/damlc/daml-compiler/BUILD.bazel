@@ -9,6 +9,7 @@ load(
 da_haskell_library(
     name = "daml-compiler",
     srcs = glob(["src/**/*.hs"]),
+    src_strip_prefix = "src",
     stackage_deps = [
         "base",
         "bytestring",
@@ -31,7 +32,6 @@ da_haskell_library(
         "utf8-string",
         "zip",
     ],
-    src_strip_prefix = "src",
     visibility = ["//visibility:public"],
     deps = [
         "//:sdk-version-hs-lib",

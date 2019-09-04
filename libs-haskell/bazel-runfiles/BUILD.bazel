@@ -6,6 +6,7 @@ load("//bazel_tools:haskell.bzl", "da_haskell_library", "da_haskell_test")
 da_haskell_library(
     name = "bazel-runfiles",
     srcs = glob(["src/DA/Bazel/Runfiles.hs"]),
+    src_strip_prefix = "src",
     stackage_deps = [
         "base",
         "directory",
@@ -13,7 +14,6 @@ da_haskell_library(
         "split",
         "transformers",
     ],
-    src_strip_prefix = "src",
     visibility = ["//visibility:public"],
     deps = [
         "@rules_haskell//tools/runfiles",

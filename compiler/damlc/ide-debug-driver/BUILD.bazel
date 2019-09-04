@@ -6,6 +6,8 @@ load("//bazel_tools:haskell.bzl", "da_haskell_binary")
 da_haskell_binary(
     name = "ide-debug-driver",
     srcs = glob(["src/**/*.hs"]),
+    main_function = "IdeDebugDriver.main",
+    src_strip_prefix = "src",
     stackage_deps = [
         "aeson",
         "base",
@@ -18,7 +20,5 @@ da_haskell_binary(
         "text",
         "yaml",
     ],
-    main_function = "IdeDebugDriver.main",
-    src_strip_prefix = "src",
     visibility = ["//visibility:public"],
 )

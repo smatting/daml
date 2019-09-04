@@ -11,6 +11,7 @@ load(
 da_haskell_library(
     name = "daml-doc",
     srcs = glob(["src/**/*.hs"]),
+    src_strip_prefix = "src",
     stackage_deps = [
         "aeson-pretty",
         "aeson",
@@ -33,7 +34,6 @@ da_haskell_library(
         "text",
         "transformers",
     ],
-    src_strip_prefix = "src",
     visibility = ["//visibility:public"],
     deps = [
         "//compiler/hie-core",
@@ -44,6 +44,7 @@ da_haskell_library(
 da_haskell_library(
     name = "daml-doc-testing",
     srcs = glob(["test/**/*.hs"]),
+    src_strip_prefix = "test",
     stackage_deps = [
         "aeson-pretty",
         "base",
@@ -56,7 +57,6 @@ da_haskell_library(
         "tasty-golden",
         "text",
     ],
-    src_strip_prefix = "test",
     visibility = ["//visibility:public"],
     deps = [
         "//compiler/damlc/daml-doc",

@@ -41,11 +41,11 @@ da_haskell_library(
 da_haskell_binary(
     name = "daml-helper",
     srcs = ["src/DA/Daml/Helper/Main.hs"],
+    main_function = "DA.Daml.Helper.Main.main",
     stackage_deps = [
         "base",
         "extra",
     ],
-    main_function = "DA.Daml.Helper.Main.main",
     visibility = ["//visibility:public"],
     deps = [
         ":daml-helper-lib",

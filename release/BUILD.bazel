@@ -6,6 +6,7 @@ load("//bazel_tools:haskell.bzl", "da_haskell_binary")
 da_haskell_binary(
     name = "release",
     srcs = glob(["src/**/*.hs"]),
+    src_strip_prefix = "src",
     stackage_deps = [
         "aeson",
         "async",
@@ -48,7 +49,6 @@ da_haskell_binary(
         "mtl",
         "xml-conduit",
     ],
-    src_strip_prefix = "src",
     visibility = ["//visibility:public"],
     deps = [],
 )

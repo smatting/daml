@@ -153,7 +153,11 @@ EOF
 da_haskell_library(
     name = "sdk-version-hs-lib",
     srcs = [":sdk-version-hs"],
-    stackage_deps = ["base", "zlib", "zlib-bindings"],
+    stackage_deps = [
+        "base",
+        "zlib",
+        "zlib-bindings",
+    ],
     visibility = ["//visibility:public"],
 )
 

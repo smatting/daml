@@ -10,6 +10,7 @@ load("@os_info//:os_info.bzl", "is_windows")
 da_haskell_library(
     name = "daml-project-config",
     srcs = glob(["daml-project-config/**/*.hs"]),
+    src_strip_prefix = "daml-project-config",
     stackage_deps = [
         "base",
         "directory",
@@ -21,7 +22,6 @@ da_haskell_library(
         "text",
         "yaml",
     ],
-    src_strip_prefix = "daml-project-config",
     visibility = ["//visibility:public"],
     deps = [],
 )
@@ -35,6 +35,7 @@ da_haskell_library(
             "src/DA/Daml/Assistant/Tests.hs",
         ],
     ),
+    src_strip_prefix = "src",
     stackage_deps = [
         "aeson",
         "base",
@@ -67,7 +68,6 @@ da_haskell_library(
         "utf8-string",
         "yaml",
     ] + (["Win32"] if is_windows else []),
-    src_strip_prefix = "src",
     visibility = ["//visibility:public"],
     deps = [
         ":daml-project-config",
@@ -78,6 +78,8 @@ da_haskell_library(
 da_haskell_binary(
     name = "daml",
     srcs = ["exe/DA/Daml/Assistant.hs"],
+    main_function = "DA.Daml.Assistant.main",
+    src_strip_prefix = "exe",
     stackage_deps = [
         "base",
         "directory",
@@ -88,8 +90,6 @@ da_haskell_binary(
         "typed-process",
         "text",
     ],
-    main_function = "DA.Daml.Assistant.main",
-    src_strip_prefix = "exe",
     visibility = ["//visibility:public"],
     deps = [
         ":daml-lib",
@@ -107,6 +107,8 @@ package_app(
 da_haskell_test(
     name = "test",
     srcs = ["test/DA/Daml/Assistant/Tests.hs"],
+    main_function = "DA.Daml.Assistant.Tests.main",
+    src_strip_prefix = "test",
     stackage_deps = [
         "base",
         "conduit",
@@ -123,8 +125,6 @@ da_haskell_test(
         "text",
         "unix-compat",
     ],
-    main_function = "DA.Daml.Assistant.Tests.main",
-    src_strip_prefix = "test",
     visibility = ["//visibility:public"],
     deps = [
         ":daml-lib",

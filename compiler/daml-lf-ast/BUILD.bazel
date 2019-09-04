@@ -6,6 +6,7 @@ load("//bazel_tools:haskell.bzl", "da_haskell_library", "da_haskell_test")
 da_haskell_library(
     name = "daml-lf-ast",
     srcs = glob(["src/**/*.hs"]),
+    src_strip_prefix = "src",
     stackage_deps = [
         "base",
         "containers",
@@ -23,7 +24,6 @@ da_haskell_library(
         "time",
         "unordered-containers",
     ],
-    src_strip_prefix = "src",
     visibility = ["//visibility:public"],
     deps = [
         "//libs-haskell/da-hs-base",
@@ -33,13 +33,13 @@ da_haskell_library(
 da_haskell_test(
     name = "tests",
     srcs = glob(["test/**/*.hs"]),
+    main_function = "DA.Daml.LF.Ast.Tests.main",
+    src_strip_prefix = "test",
     stackage_deps = [
         "base",
         "tasty",
         "tasty-hunit",
     ],
-    main_function = "DA.Daml.LF.Ast.Tests.main",
-    src_strip_prefix = "test",
     visibility = ["//visibility:public"],
     deps = [
         ":daml-lf-ast",

@@ -29,10 +29,10 @@ da_haskell_binary(
         "//compiler/damlc/pkg-db",
         "//compiler/scenario-service/server:scenario_service_jar",
     ],
+    src_strip_prefix = "exe",
     stackage_deps = [
         "base",
     ],
-    src_strip_prefix = "exe",
     visibility = ["//visibility:public"],
     deps = [
         ":damlc-lib",
@@ -51,10 +51,10 @@ da_haskell_binary(
         "-optl-static",
         "-optl-pthread",
     ] if is_windows else [],
+    src_strip_prefix = "exe",
     stackage_deps = [
         "base",
     ],
-    src_strip_prefix = "exe",
     visibility = ["//visibility:public"],
     deps = [
         ":damlc-lib",
@@ -91,6 +91,7 @@ da_haskell_library(
     extra_srcs = [
         "//compiler/daml-licenses/licenses:licensing.md",
     ],
+    src_strip_prefix = "lib",
     stackage_deps = [
         "aeson-pretty",
         "aeson",
@@ -134,7 +135,6 @@ da_haskell_library(
         "unordered-containers",
         "uniplate",
     ] + ([] if is_windows else ["unix"]),
-    src_strip_prefix = "lib",
     visibility = ["//visibility:public"],
     deps = [
         "//:sdk-version-hs-lib",
