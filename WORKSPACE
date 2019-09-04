@@ -31,6 +31,11 @@ load("@rules_haskell//haskell:repositories.bzl", "rules_haskell_dependencies")
 
 rules_haskell_dependencies()
 
+load("@rules_haskell//tools:repositories.bzl", "rules_haskell_worker_dependencies")
+
+# We don't use the worker mode, but this is required for bazel query.
+rules_haskell_worker_dependencies()
+
 http_archive(
     name = "alex",
     build_file_content = """
