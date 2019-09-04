@@ -18,9 +18,10 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 daml_deps()
 
 load("//bazel_tools:os_info.bzl", "os_info")
-os_info(name = "os_info")
-load("@os_info//:os_info.bzl", "is_linux", "is_windows")
 
+os_info(name = "os_info")
+
+load("@os_info//:os_info.bzl", "is_linux", "is_windows")
 load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 
 protobuf_deps()
@@ -44,9 +45,9 @@ haskell_cabal_binary(
     visibility = ["//visibility:public"],
 )
     """,
-    urls = ["http://hackage.haskell.org/package/alex-3.2.4/alex-3.2.4.tar.gz"],
-    strip_prefix = "alex-3.2.4",
     sha256 = "d58e4d708b14ff332a8a8edad4fa8989cb6a9f518a7c6834e96281ac5f8ff232",
+    strip_prefix = "alex-3.2.4",
+    urls = ["http://hackage.haskell.org/package/alex-3.2.4/alex-3.2.4.tar.gz"],
 )
 
 http_archive(
@@ -59,9 +60,9 @@ haskell_cabal_binary(
     visibility = ["//visibility:public"],
 )
     """,
-    urls = ["http://hackage.haskell.org/package/happy-1.19.11/happy-1.19.11.tar.gz"],
-    strip_prefix = "happy-1.19.11",
     sha256 = "9094d19ed0db980a34f1ffd58e64c7df9b4ecb3beed22fd9b9739044a8d45f77",
+    strip_prefix = "happy-1.19.11",
+    urls = ["http://hackage.haskell.org/package/happy-1.19.11/happy-1.19.11.tar.gz"],
 )
 
 http_archive(
@@ -81,9 +82,9 @@ haskell_cabal_binary(
     visibility = ["//visibility:public"],
 )
     """,
-    urls = ["http://hackage.haskell.org/package/c2hs-0.28.6/c2hs-0.28.6.tar.gz"],
-    strip_prefix = "c2hs-0.28.6",
     sha256 = "91dd121ac565009f2fc215c50f3365ed66705071a698a545e869041b5d7ff4da",
+    strip_prefix = "c2hs-0.28.6",
+    urls = ["http://hackage.haskell.org/package/c2hs-0.28.6/c2hs-0.28.6.tar.gz"],
 )
 
 http_archive(
@@ -99,11 +100,11 @@ haskell_cabal_library(
     visibility = ["//visibility:public"],
 )
     """,
-    urls = ["https://github.com/awakesecurity/proto3-suite/archive/f5ca2bee361d518de5c60b9d05d0f54c5d2f22af.tar.gz"],
-    strip_prefix = "proto3-suite-f5ca2bee361d518de5c60b9d05d0f54c5d2f22af",
-    sha256 = "6a803b1655824e5bec2c518b39b6def438af26135d631b60c9b70bf3af5f0db2",
-    patches = ["@com_github_digital_asset_daml//bazel_tools:haskell-proto3-suite.patch"],
     patch_args = ["-p1"],
+    patches = ["@com_github_digital_asset_daml//bazel_tools:haskell-proto3-suite.patch"],
+    sha256 = "6a803b1655824e5bec2c518b39b6def438af26135d631b60c9b70bf3af5f0db2",
+    strip_prefix = "proto3-suite-f5ca2bee361d518de5c60b9d05d0f54c5d2f22af",
+    urls = ["https://github.com/awakesecurity/proto3-suite/archive/f5ca2bee361d518de5c60b9d05d0f54c5d2f22af.tar.gz"],
 )
 
 http_archive(
@@ -124,17 +125,26 @@ haskell_cabal_binary(
     visibility = ["//visibility:public"],
 )
     """,
-    urls = ["https://github.com/awakesecurity/proto3-suite/archive/f5ca2bee361d518de5c60b9d05d0f54c5d2f22af.tar.gz"],
-    strip_prefix = "proto3-suite-f5ca2bee361d518de5c60b9d05d0f54c5d2f22af",
-    sha256 = "6a803b1655824e5bec2c518b39b6def438af26135d631b60c9b70bf3af5f0db2",
-    patches = ["@com_github_digital_asset_daml//bazel_tools:haskell-proto3-suite.patch"],
     patch_args = ["-p1"],
+    patches = ["@com_github_digital_asset_daml//bazel_tools:haskell-proto3-suite.patch"],
+    sha256 = "6a803b1655824e5bec2c518b39b6def438af26135d631b60c9b70bf3af5f0db2",
+    strip_prefix = "proto3-suite-f5ca2bee361d518de5c60b9d05d0f54c5d2f22af",
+    urls = ["https://github.com/awakesecurity/proto3-suite/archive/f5ca2bee361d518de5c60b9d05d0f54c5d2f22af.tar.gz"],
 )
 
 load("@rules_haskell//haskell:cabal.bzl", "stack_snapshot")
 
 stack_snapshot(
     name = "stackage",
+    flags = {
+        "blaze-textual": ["integer-simple"],
+        "cryptonite": ["-integer-gmp"],
+        "hashable": ["-integer-gmp"],
+        "integer-logarithms": ["-integer-gmp"],
+        "text": ["integer-simple"],
+        "scientific": ["integer-simple"],
+    } if not is_windows else {},
+    local_snapshot = "//:stack-snapshot.yaml",
     packages = [
         "aeson",
         "aeson-pretty",
@@ -286,46 +296,40 @@ stack_snapshot(
         "zlib",
         "zlib-bindings",
     ] + (["unix"] if not is_windows else ["Win32"]),
+    tools = [
+        "@alex",
+        "@c2hs",
+        "@happy",
+    ],
     vendored_packages = {
         "proto3-suite": "@proto3_suite//:proto3-suite",
     },
-    flags = {
-        "blaze-textual": ["integer-simple"],
-        "cryptonite": ["-integer-gmp"],
-        "hashable": ["-integer-gmp"],
-        "integer-logarithms": ["-integer-gmp"],
-        "text": ["integer-simple"],
-        "scientific": ["integer-simple"],
-    } if not is_windows else {},
     deps = {
         "bzlib-conduit": ["@bzip2//:libbz2"],
         "digest": ["@com_github_madler_zlib//:libz"],
-        "grpc-haskell-core": ["//3rdparty/c:gpr", "//3rdparty/c:grpc"],
+        "grpc-haskell-core": [
+            "//3rdparty/c:gpr",
+            "//3rdparty/c:grpc",
+        ],
         "zlib": ["@com_github_madler_zlib//:libz"],
     },
-    tools = [
-        "@alex//:alex",
-        "@c2hs//:c2hs",
-        "@happy//:happy",
-    ],
-    local_snapshot = "//:stack-snapshot.yaml",
 )
 
 # Used to bootstrap `@c2hs` for `@stackage`.
 stack_snapshot(
     name = "c2hs_deps",
+    local_snapshot = "//:stack-snapshot.yaml",
     packages = [
         "base",
         "bytestring",
-        "language-c",
-        "filepath",
         "dlist",
+        "filepath",
+        "language-c",
     ],
     tools = [
-        "@alex//:alex",
-        "@happy//:happy",
+        "@alex",
+        "@happy",
     ],
-    local_snapshot = "//:stack-snapshot.yaml",
 )
 
 register_toolchains(
