@@ -50,6 +50,7 @@ def daml_deps():
                 "@com_github_digital_asset_daml//bazel_tools:haskell-stack-vendored.patch",
                 "@com_github_digital_asset_daml//bazel_tools:haskell-stackage.patch",
                 "@com_github_digital_asset_daml//bazel_tools:haskell-stack-windows-architecture.patch",
+                "@com_github_digital_asset_daml//bazel_tools:haskell-cabal-run-shell.patch",
             ],
             patch_args = ["-p1"],
             sha256 = rules_haskell_sha256,
