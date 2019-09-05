@@ -132,6 +132,33 @@ haskell_cabal_binary(
     urls = ["https://github.com/awakesecurity/proto3-suite/archive/f5ca2bee361d518de5c60b9d05d0f54c5d2f22af.tar.gz"],
 )
 
+http_archive(
+    name = "grpc_haskell_core",
+    build_file_content = """
+load("@rules_haskell//haskell:cabal.bzl", "haskell_cabal_library")
+load("@stackage//:packages.bzl", "packages")
+haskell_cabal_library(
+    name = "grpc-haskell-core",
+    version = "0.0.0.0",
+    srcs = glob(["**"]),
+    deps = packages["grpc-haskell-core"].deps + [
+        "@com_github_digital_asset_daml//3rdparty/c:gpr",
+        "@com_github_digital_asset_daml//3rdparty/c:grpc",
+    ],
+    tools = ["@c2hs//:c2hs"],
+    visibility = ["//visibility:public"],
+)
+    """,
+    patch_args = ["-p2"],
+    patches = [
+        "@com_github_digital_asset_daml//bazel_tools:grpc-haskell-core-mask-runops.patch",
+        "@com_github_digital_asset_daml//bazel_tools:grpc-haskell-core-cpp-options.patch",
+    ],
+    sha256 = "c6201f4e2fd39f25ca1d47b1dac4efdf151de88a2eb58254d61abc2760e58fda",
+    strip_prefix = "gRPC-haskell-11681ec6b99add18a8d1315f202634aea343d146/core",
+    urls = ["https://github.com/awakesecurity/gRPC-haskell/archive/11681ec6b99add18a8d1315f202634aea343d146.tar.gz"],
+)
+
 load("@rules_haskell//haskell:cabal.bzl", "stack_snapshot")
 
 stack_snapshot(
@@ -192,7 +219,6 @@ stack_snapshot(
         "ghc-prim",
         "gitrev",
         "grpc-haskell",
-        "grpc-haskell-core",
         "hashable",
         "haskeline",
         "haskell-lsp",
@@ -302,15 +328,12 @@ stack_snapshot(
         "@happy",
     ],
     vendored_packages = {
+        "grpc-haskell-core": "@grpc_haskell_core//:grpc-haskell-core",
         "proto3-suite": "@proto3_suite//:proto3-suite",
     },
     deps = {
         "bzlib-conduit": ["@bzip2//:libbz2"],
         "digest": ["@com_github_madler_zlib//:libz"],
-        "grpc-haskell-core": [
-            "//3rdparty/c:gpr",
-            "//3rdparty/c:grpc",
-        ],
         "zlib": ["@com_github_madler_zlib//:libz"],
     },
 )
