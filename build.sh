@@ -13,6 +13,14 @@ export LC_ALL=en_US.UTF-8
 
 ARTIFACT_DIRS="${BUILD_ARTIFACTSTAGINGDIRECTORY:-$PWD}"
 
+# If a previous build was forcefully terminated, then stack's lock file might
+# not have been cleaned up properly leading to errors of the form
+#
+#   user error (hTryLock: lock already exists: /home/vsts/.stack/pantry/hackage/hackage-security-lock)
+#
+# This forcefully cleans up that lock file.
+rm -f ~/.stack/pantry/hackage/hackage-security-lock
+
 # Bazel test only builds targets that are dependencies of a test suite
 # so do a full build first.
 (

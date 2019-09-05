@@ -11,6 +11,16 @@ if (!(Test-Path .\.bazelrc.local)) {
 
 $ARTIFACT_DIRS = if ("$env:BUILD_ARTIFACTSTAGINGDIRECTORY") { $env:BUILD_ARTIFACTSTAGINGDIRECTORY } else { Get-Location }
 
+# If a previous build was forcefully terminated, then stack's lock file might
+# not have been cleaned up properly leading to errors of the form
+#
+#   user error (hTryLock: lock already exists: C:\Users\VssAdministrator\AppData\Roaming\stack\pantry\hackage\hackage-security-lock)
+#
+# This forcefully cleans up that lock file.
+if (Test-Path -Path $env:appdata\stack\pantry\hackage\hackage-security-lock) {
+    Remove-Item -Force -Path $env:appdata\stack\pantry\hackage\hackage-security-lock
+}
+
 function bazel() {
     Write-Output ">> bazel $args"
     $global:lastexitcode = 0
