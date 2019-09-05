@@ -25,7 +25,9 @@ ARTIFACT_DIRS="${BUILD_ARTIFACTSTAGINGDIRECTORY:-$PWD}"
 #   IncompletePayload 56726464 844
 #
 if [[ -f ~/.stack/pantry/hackage/hackage-security-lock ]]; then
+  echo "Nuking ~/.stack" >&2
   rm -rf ~/.stack
+  ls -lR ~/.stack || true >&2
 fi
 
 # Bazel test only builds targets that are dependencies of a test suite
