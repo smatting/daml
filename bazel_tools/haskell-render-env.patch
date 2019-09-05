@@ -1,0 +1,19 @@
+diff --git a/haskell/private/context.bzl b/haskell/private/context.bzl
+index 63c48b41..20a035d5 100644
+--- a/haskell/private/context.bzl
++++ b/haskell/private/context.bzl
+@@ -69,11 +69,11 @@ def render_env(env):
+     Example:
+ 
+       >>> render_env({"PATH": "foo:bar", "LANG": "lang"})
+-      export PATH=foo:bar
+-      export LANG=lang
++      export PATH="foo:bar"
++      export LANG="lang"
+ 
+     """
+     return "\n".join([
+-        "export {}={}".format(k, v)
++        'export {}="{}"'.format(k, v)
+         for k, v in env.items()
+     ])
