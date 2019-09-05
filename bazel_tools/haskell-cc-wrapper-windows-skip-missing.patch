@@ -1,0 +1,30 @@
+diff --git a/haskell/private/cc_wrapper_windows.sh.tpl b/haskell/private/cc_wrapper_windows.sh.tpl
+index d667b1fa..517e6d92 100644
+--- a/haskell/private/cc_wrapper_windows.sh.tpl
++++ b/haskell/private/cc_wrapper_windows.sh.tpl
+@@ -131,15 +131,21 @@ handle_include_dir() {
+     local flag="$1"
+     local include_dir="$2"
+     local shortened
+-    shorten_path shortened "$include_dir"
+-    add_arg "$flag$shortened"
++    # Skip non-existent include directories
++    if [[ -e "$include_dir" ]]; then
++        shorten_path shortened "$include_dir"
++        add_arg "$flag$shortened"
++    fi
+ }
+ 
+ handle_lib_dir() {
+     local lib_dir="$1"
+     local shortened
+-    shorten_path shortened "$lib_dir"
+-    add_arg "-L$shortened"
++    # Skip non-existent library search paths
++    if [[ -e "$lib_dir" ]]; then
++        shorten_path shortened "$lib_dir"
++        add_arg "-L$shortened"
++    fi
+ }
+ 
+ handle_arg() {

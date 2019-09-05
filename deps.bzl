@@ -52,6 +52,7 @@ def daml_deps():
                 "@com_github_digital_asset_daml//bazel_tools:haskell-stack-windows-support.patch",
                 "@com_github_digital_asset_daml//bazel_tools:haskell-stack-update.patch",
                 "@com_github_digital_asset_daml//bazel_tools:haskell-render-env.patch",
+                "@com_github_digital_asset_daml//bazel_tools:haskell-cc-wrapper-windows-skip-missing.patch",
             ],
             patch_args = ["-p1"],
             sha256 = rules_haskell_sha256,
