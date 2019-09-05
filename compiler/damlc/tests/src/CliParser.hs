@@ -29,7 +29,7 @@ tests = testGroup
     ]
 
 parse :: [String] -> IO ()
-parse args = withArgs args $ execParserLax parserInfo
+parse args = execParserLax args parserInfo
 
 parseSucceeds :: [String] -> Assertion
 parseSucceeds = shouldSucceed . parse

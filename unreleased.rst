@@ -14,3 +14,6 @@ HEAD — ongoing
 + [DAML Integration Kit] The test tool now runs the double spend test on a shared contract in a
   multi-node setup (as well as single-node).
 + [DAML Integration Kit] The test tool can now run all semantic test in a multi-node setup.
++ [DAML Assistant] The `daml.yaml` syntax now supports an additional key
+  `damlc-options`, which you can use to list cli options you want added to all
+  invocations of `damlc`.

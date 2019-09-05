@@ -12,22 +12,17 @@ import Options.Applicative hiding (customExecParser, execParser)
 import Options.Applicative.Internal
 import Options.Applicative.BashCompletion
 import Options.Applicative.Common
-import System.Environment
 import System.IO
 
 -- | Runs the argument parser in a normal way unless the first argument is "lax"
 --   In this case it discards invalid flags and continues
-execParserLax :: Op.ParserInfo a -> IO a
-execParserLax = customExecParser Op.defaultPrefs
-
-customExecParser :: Op.ParserPrefs -> Op.ParserInfo a -> IO a
-customExecParser pprefs pinfo = do
-  args <- getArgs
+execParserLax :: [String] -> Op.ParserInfo a -> IO a
+execParserLax args pinfo = do
   filteredArgs <-
         case args of
-          "lax":xs -> removeUnknownFlags pprefs pinfo xs
+          "lax":xs -> removeUnknownFlags Op.defaultPrefs pinfo xs
           xs -> pure xs
-  Op.handleParseResult $ Op.execParserPure pprefs pinfo filteredArgs
+  Op.handleParseResult $ Op.execParserPure Op.defaultPrefs pinfo filteredArgs
 
 -- | If the parser fails on an unrecognized flags remove those flags
 --   Worst case O(N^2)

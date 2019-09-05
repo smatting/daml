@@ -75,7 +75,7 @@ import "ghc-lib-parser" Packages
 import qualified Proto3.Suite as PS
 import qualified Proto3.Suite.JSONPB as Proto.JSONPB
 import System.Directory.Extra
-import System.Environment
+import qualified System.Environment as Env
 import System.Exit
 import System.FilePath
 import System.Info.Extra
@@ -390,7 +390,8 @@ parseProjectConfig project = do
     dependencies <-
         queryProjectConfigRequired ["dependencies"] project
     sdkVersion <- queryProjectConfigRequired ["sdk-version"] project
-    Right $ PackageConfigFields name main exposedModules version dependencies sdkVersion
+    cliOpts <- queryProjectConfig ["damlc-options"] project
+    Right $ PackageConfigFields name main exposedModules version dependencies sdkVersion cliOpts
 
 -- | We assume that this is only called within `withProjectRoot`.
 withPackageConfig :: (PackageConfigFields -> IO a) -> IO a
@@ -561,6 +562,7 @@ execPackage projectOpts filePath opts mbOutFile dalfInput = withProjectRoot' pro
                             , pVersion = ""
                             , pDependencies = []
                             , pSdkVersion = ""
+                            , cliOpts = Nothing
                             }
                           (toNormalizedFilePath $ fromMaybe ifaceDir $ optIfaceDir opts')
                           dalfInput
@@ -985,12 +987,26 @@ parserInfo numProcessors =
         ])
     )
 
+cliArgsFromDamlYaml :: IO [String]
+cliArgsFromDamlYaml = do
+    handle (\(_ :: ConfigError) -> return [])
+           $ do
+               project <- readProjectConfig $ ProjectPath "."
+               case parseProjectConfig project of
+                   Left _ -> return []
+                   Right pkgConfig -> case cliOpts pkgConfig of
+                       Nothing -> return []
+                       Just xs -> return xs
+
 main :: IO ()
 main = do
     -- We need this to ensure that logs are flushed on SIGTERM.
     installSignalHandlers
     numProcessors <- getNumProcessors
-    withProgName "damlc" $ join $ execParserLax (parserInfo numProcessors)
+    cliArgs <- Env.getArgs
+    damlYamlArgs <- cliArgsFromDamlYaml
+    let args = cliArgs ++ damlYamlArgs
+    Env.withProgName "damlc" $ join $ execParserLax args (parserInfo numProcessors)
 
 withProjectRoot' :: ProjectOpts -> ((FilePath -> IO FilePath) -> IO a) -> IO a
 withProjectRoot' ProjectOpts{..} act =
