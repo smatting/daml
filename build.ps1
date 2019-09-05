@@ -23,7 +23,9 @@ $ARTIFACT_DIRS = if ("$env:BUILD_ARTIFACTSTAGINGDIRECTORY") { $env:BUILD_ARTIFAC
 #   IncompletePayload 56726464 844
 #
 if (Test-Path -Path $env:appdata\stack\pantry\hackage\hackage-security-lock) {
-    Remove-Item -Force -Recurse -Path $env:appdata\stack
+    Write-Output ">> Nuking stack directory"
+    Remove-Item -ErrorAction Continue -Force -Recurse -Path $env:appdata\stack
+    Get-ChildItem -ErrorAction Continue -Force -Path $env:appdata\stack
 }
 
 function bazel() {
