@@ -54,6 +54,7 @@
         "usr\\bin\\rm.exe",
         "usr\\bin\\sed.exe",
         "usr\\bin\\sh.exe",
+        "usr\\bin\\stty.exe",
         "usr\\bin\\patch.exe",
         "mingw64\\bin\\jq.exe",
         "mingw64\\bin\\initdb.exe",
