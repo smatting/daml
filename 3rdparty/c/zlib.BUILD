@@ -35,15 +35,6 @@ cc_library(
     ],
 )
 
-# filegroups for library and headers, to
-# be passed to hazel_repositories.
-
-filegroup(
-    name = "lib",
-    srcs = [":libz"],
-    output_group = "dynamic_library",
-)
-
 filegroup(
     name = "headers",
     srcs = [
