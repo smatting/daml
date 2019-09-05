@@ -18,8 +18,15 @@ ARTIFACT_DIRS="${BUILD_ARTIFACTSTAGINGDIRECTORY:-$PWD}"
 #
 #   user error (hTryLock: lock already exists: /home/vsts/.stack/pantry/hackage/hackage-security-lock)
 #
-# This forcefully cleans up that lock file.
-rm -f ~/.stack/pantry/hackage/hackage-security-lock
+# The package cache might be corrupted and just removing the lock might lead to
+# errors as below, so we just nuke the entire stack cache.
+#
+#   Failed populating package index cache
+#   IncompletePayload 56726464 844
+#
+if [[ -f ~/.stack/pantry/hackage/hackage-security-lock ]]; then
+  rm -rf ~/.stack
+fi
 
 # Bazel test only builds targets that are dependencies of a test suite
 # so do a full build first.

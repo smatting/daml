@@ -16,9 +16,14 @@ $ARTIFACT_DIRS = if ("$env:BUILD_ARTIFACTSTAGINGDIRECTORY") { $env:BUILD_ARTIFAC
 #
 #   user error (hTryLock: lock already exists: C:\Users\VssAdministrator\AppData\Roaming\stack\pantry\hackage\hackage-security-lock)
 #
-# This forcefully cleans up that lock file.
+# The package cache might be corrupted and just removing the lock might lead to
+# errors as below, so we just nuke the entire stack cache.
+#
+#   Failed populating package index cache
+#   IncompletePayload 56726464 844
+#
 if (Test-Path -Path $env:appdata\stack\pantry\hackage\hackage-security-lock) {
-    Remove-Item -Force -Path $env:appdata\stack\pantry\hackage\hackage-security-lock
+    Remove-Item -Force -Recurse -Path $env:appdata\stack
 }
 
 function bazel() {
