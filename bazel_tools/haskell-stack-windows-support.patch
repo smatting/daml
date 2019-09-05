@@ -1,0 +1,184 @@
+diff --git a/WORKSPACE b/WORKSPACE
+index d455cb28..34b5cf06 100644
+--- a/WORKSPACE
++++ b/WORKSPACE
+@@ -77,7 +77,7 @@ stack_snapshot(
+     name = "stackage-zlib",
+     packages = ["zlib"],
+     snapshot = "lts-13.15",
+-    deps = {"zlib": ["@zlib.dev//:zlib"]},
++    deps = {"zlib": ["@zlib.win//:zlib" if is_windows else "@zlib.dev//:zlib"]},
+ )
+ 
+ load(
+@@ -268,6 +268,26 @@ filegroup(
+     repository = "@nixpkgs",
+ )
+ 
++
++http_archive(
++    name = "zlib.win",
++    build_file_content = """
++cc_library(
++    name = "zlib",
++    # Import `:z` as `srcs` to enforce the library name `libz.so`. Otherwise,
++    # Bazel would mangle the library name and e.g. Cabal wouldn't recognize it.
++    srcs = [":z"],
++    hdrs = glob(["*.h"]),
++    includes = ["."],
++    visibility = ["//visibility:public"],
++)
++cc_library(name = "z", srcs = glob(["*.c"]), hdrs = glob(["*.h"]))
++""",
++    strip_prefix = "zlib-1.2.11",
++    urls = ["http://zlib.net/zlib-1.2.11.tar.gz"],
++    sha256 = "c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1",
++)
++
+ load("@bazel_tools//tools/build_defs/repo:jvm.bzl", "jvm_maven_import_external")
+ 
+ jvm_maven_import_external(
+diff --git a/haskell/cabal.bzl b/haskell/cabal.bzl
+index b0469f9a..6d13a893 100644
+--- a/haskell/cabal.bzl
++++ b/haskell/cabal.bzl
+@@ -113,6 +113,7 @@ def _prepare_cabal_inputs(hs, cc, dep_info, cc_info, package_id, tool_inputs, to
+             # XXX Workaround
+             # https://github.com/bazelbuild/bazel/issues/5980.
+             "%{env}": render_env(env),
++            "%{is_windows}": str(hs.toolchain.is_windows),
+         },
+     )
+ 
+@@ -145,7 +146,7 @@ def _prepare_cabal_inputs(hs, cc, dep_info, cc_info, package_id, tool_inputs, to
+     args.add_all(tool_inputs, map_each = _cabal_tool_flag)
+ 
+     inputs = depset(
+-        [setup, hs.tools.ghc, hs.tools.ghc_pkg, hs.tools.runghc],
++        [cabal_wrapper, setup, hs.tools.ghc, hs.tools.ghc_pkg, hs.tools.runghc],
+         transitive = [
+             depset(srcs),
+             depset(cc.files),
+@@ -229,8 +230,8 @@ def _haskell_cabal_library_impl(ctx):
+         cabal_wrapper_tpl = ctx.file._cabal_wrapper_tpl,
+         package_database = package_database,
+     )
+-    ctx.actions.run(
+-        executable = c.cabal_wrapper,
++    ctx.actions.run_shell(
++        command = '{} "$@"'.format(c.cabal_wrapper.path),
+         arguments = [c.args],
+         inputs = c.inputs,
+         input_manifests = c.input_manifests,
+@@ -377,7 +378,10 @@ def _haskell_cabal_binary_impl(ctx):
+         sibling = cabal,
+     )
+     binary = hs.actions.declare_file(
+-        "_install/bin/{}".format(hs.label.name),
++        "_install/bin/{name}{ext}".format(
++            name = hs.label.name,
++            ext = ".exe" if hs.toolchain.is_windows else "",
++        ),
+         sibling = cabal,
+     )
+     data_dir = hs.actions.declare_directory(
+@@ -400,8 +404,8 @@ def _haskell_cabal_binary_impl(ctx):
+         cabal_wrapper_tpl = ctx.file._cabal_wrapper_tpl,
+         package_database = package_database,
+     )
+-    ctx.actions.run(
+-        executable = c.cabal_wrapper,
++    ctx.actions.run_shell(
++        command = '{} "$@"'.format(c.cabal_wrapper.path),
+         arguments = [c.args],
+         inputs = c.inputs,
+         input_manifests = c.input_manifests,
+@@ -878,16 +882,31 @@ def _get_platform(repository_ctx):
+         os = "freebsd"
+     elif os_name.find("windows") != -1:
+         os = "windows"
+-
+-    result = repository_ctx.execute(["uname", "-m"])
+-    if result.stdout.strip() in ["arm", "armv7l"]:
+-        arch = "arm"
+-    elif result.stdout.strip() in ["aarch64"]:
+-        arch = "aarch64"
+-    elif result.stdout.strip() in ["amd64", "x86_64", "x64"]:
+-        arch = "x86_64"
+-    elif result.stdout.strip() in ["i386", "i486", "i586", "i686"]:
+-        arch = "i386"
++    else:
++        fail("Unknown OS: '{}'".format(os_name))
++
++    if os == "windows":
++        reg_query = ["reg", "QUERY", "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment", "/v", "PROCESSOR_ARCHITECTURE"]
++        result = repository_ctx.execute(reg_query)
++        value = result.stdout.strip().split(" ")[-1].lower()
++        if value in ["amd64", "ia64"]:
++            arch = "x86_64"
++        elif value in ["x86"]:
++            arch = "i386"
++        else:
++            fail("Failed to determine CPU architecture:\n{}\n{}".format(result.stdout, result.stderr))
++    else:
++        result = repository_ctx.execute(["uname", "-m"])
++        if result.stdout.strip() in ["arm", "armv7l"]:
++            arch = "arm"
++        elif result.stdout.strip() in ["aarch64"]:
++            arch = "aarch64"
++        elif result.stdout.strip() in ["amd64", "x86_64", "x64"]:
++            arch = "x86_64"
++        elif result.stdout.strip() in ["i386", "i486", "i586", "i686"]:
++            arch = "i386"
++        else:
++            fail("Failed to determine CPU architecture:\n{}\n{}".format(result.stdout, result.stderr))
+ 
+     return (os, arch)
+ 
+@@ -908,7 +927,7 @@ def _fetch_stack_impl(repository_ctx):
+     repository_ctx.download_and_extract(url = url, sha256 = sha256)
+     stack_cmd = repository_ctx.path(
+         "stack-{}-{}-{}".format(version, os, arch),
+-    ).get_child("stack")
++    ).get_child("stack.exe" if os == "windows" else "stack")
+     _execute_or_fail_loudly(repository_ctx, [stack_cmd, "--version"])
+     exec_result = repository_ctx.execute([stack_cmd, "--version"], quiet = True)
+     if exec_result.return_code != 0:
+diff --git a/haskell/private/cabal_wrapper.sh.tpl b/haskell/private/cabal_wrapper.sh.tpl
+index a6011be4..77503e5b 100644
+--- a/haskell/private/cabal_wrapper.sh.tpl
++++ b/haskell/private/cabal_wrapper.sh.tpl
+@@ -92,6 +92,11 @@ package_database=$pkgroot/package.conf.d
+ 
+ %{ghc_pkg} recache --package-db=$package_database
+ 
++ENABLE_RELOCATABLE=
++if [[ %{is_windows} != True ]]; then
++    ENABLE_RELOCATABLE=--enable-relocatable
++fi
++
+ # Cabal really wants the current working directory to be directory
+ # where the .cabal file is located. So we have no choice but to chance
+ # cd into it, but then we have to rewrite all relative references into
+@@ -106,7 +111,7 @@ $execroot/%{runghc} $setup configure \
+     --with-ar=$ar \
+     --with-strip=$strip \
+     --enable-deterministic \
+-    --enable-relocatable \
++    $ENABLE_RELOCATABLE \
+     --builddir=$distdir \
+     --prefix=$pkgroot \
+     --libdir=$libdir \
+diff --git a/haskell/private/cc_wrapper_windows.sh.tpl b/haskell/private/cc_wrapper_windows.sh.tpl
+index 54ceb522..d667b1fa 100644
+--- a/haskell/private/cc_wrapper_windows.sh.tpl
++++ b/haskell/private/cc_wrapper_windows.sh.tpl
+@@ -160,7 +160,7 @@ handle_arg() {
+             handle_arg "$line"
+         done < "${BASH_REMATCH[1]}"
+         IN_RESPONSE_FILE=
+-    elif [[ "$arg" =! ^(-I|-iquote|-isystem|-idirafter)(.*)$ ]]; then
++    elif [[ "$arg" =~ ^(-I|-iquote|-isystem|-idirafter)(.*)$ ]]; then
+         handle_include_dir "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
+     elif [[ "$arg" = -I || "$arg" = -iquote || "$arg" = -isystem || "$arg" = -idirafter ]]; then
+         INCLUDE_DIR_COMING=1
