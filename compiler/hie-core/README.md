@@ -94,7 +94,7 @@ These instructions apply if you use nixpkgs to provision a development as descri
 Prerequisites:
 
 * You have built `hie-core`
-* Your project has a `shell.nix` that in which you can use `cabal` to build your project. The GHC version in this environment must match the GHC version you've used to build `hie-core` exactly.
+* Your project has a `shell.nix` in which you can use `cabal` to build your project. The GHC version in this environment must match the GHC version you've used to build `hie-core` exactly.
 
 Create a wrapper script `hie-core-wrapper.sh`:
 
