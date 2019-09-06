@@ -89,18 +89,18 @@ If you don't already have [MELPA](https://melpa.org/#/) package installation con
 
 ### Using with nix
 
-These instructions apply if you use nixpkgs to provision a development for you as described in the [nixpkgs manual](https://nixos.org/nixpkgs/manual/#how-to-create-nix-builds-for-your-own-private-haskell-packages). For more a more in-depth tutorial see [Nix and Haskell in production](https://github.com/Gabriel439/haskell-nix).
+These instructions apply if you use nixpkgs to provision a development as described in the [nixpkgs manual](https://nixos.org/nixpkgs/manual/#how-to-create-nix-builds-for-your-own-private-haskell-packages). For more a more in-depth tutorial see [Nix and Haskell in production](https://github.com/Gabriel439/haskell-nix).
 
 Prerequisites:
 
 * You have built `hie-core`
-* Your project has a `shell.nix` that defines your development environment. The GHC version in this environment must match the GHC version you used to build `hie-core` exactly.
+* Your project has a `shell.nix` that in which you can use `cabal` to build your project. The GHC version in this environment must match the GHC version you've used to build `hie-core` exactly.
 
-Created a wraper script `hie-core-wrapper.sh`:
+Create a wrapper script `hie-core-wrapper.sh`:
 
 ```sh
 #!/bin/sh
 nix-shell --run "/path/to/your/hie-core $@"
 ```
 
-and use that in the LSP configuration of your editor.
+and use the command `/path/to/your/hie-core-wrapper.sh --lsp` in the LSP configuration of your editor.
