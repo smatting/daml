@@ -86,3 +86,19 @@ If you don't already have [MELPA](https://melpa.org/#/) package installation con
  ;;(setq lsp-log-io t)
 )
 ```
+
+### Using with nix
+
+These instructions apply if you use nixpkgs to provision a development for you as described in the [nixpkgs manual](https://nixos.org/nixpkgs/manual/#how-to-create-nix-builds-for-your-own-private-haskell-packages). For more in-depth instruction see also [Nix and Haskell in production](https://github.com/Gabriel439/haskell-nix).
+
+Prerequisites:
+    * You have built `hie-core`
+    * Your project has a `shell.nix` that defines your development environment. The GHC version in this environment must match the one you used to build `hie-core` exactly.
+
+You must start `hie-core` inside of a nix-shell. For that you should created a `hie-core-wrapper.sh`:
+
+```sh
+#!/bin/sh
+nix-shell --run "/path/to/your/hie-core $@"
+```
+and then use that wrapper in your editor configuration.
