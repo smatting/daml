@@ -94,13 +94,13 @@ These instructions apply if you use nixpkgs to provision a development for you a
 Prerequisites:
 
 * You have built `hie-core`
-* Your project has a `shell.nix` that defines your development environment. The GHC version in this environment must match the one you used to build `hie-core` exactly.
+* Your project has a `shell.nix` that defines your development environment. The GHC version in this environment must match the GHC version you used to build `hie-core` exactly.
 
-You must start `hie-core` inside of a nix-shell. For that you should created a `hie-core-wrapper.sh`:
+Created a wraper script `hie-core-wrapper.sh`:
 
 ```sh
 #!/bin/sh
 nix-shell --run "/path/to/your/hie-core $@"
 ```
 
-and then use that wrapper in the LSP configuration of your editor.
+and use that in the LSP configuration of your editor.
